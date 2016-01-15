@@ -44,8 +44,8 @@ function state_change() {
     }
 
     // Validate the request's response.
-    if (!AcquiaHttpHmac.isValid(request)) {
-      throw new Error('The request\'s response was not valid.', request);
+    if (!AcquiaHttpHmac.hasValidResponse(request)) {
+      throw new Error('The request does not have a valid response.', request);
       return;
     }
 

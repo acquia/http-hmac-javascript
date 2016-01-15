@@ -129,14 +129,14 @@ AcquiaHttpHmac.sign = function(request, method, path, signed_headers, content_ty
 };
 
 /**
- * Check if the request's response is valid.
+ * Check if the request has a valid response.
  *
  * @param {XMLHttpRequest} request
  *   The request to be validated.
  * @returns {boolean}
  *   TRUE if the request is valid; FALSE otherwise.
  */
-AcquiaHttpHmac.isValid = function(request) {
+AcquiaHttpHmac.hasValidResponse = function(request) {
   var signature_base_string = AcquiaHttpHmacConfig.nonce + '\n' +
         request.x_authorization_timestamp + '\n' +
         request.responseText,
