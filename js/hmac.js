@@ -19,11 +19,11 @@ var AcquiaHttpHmacConfig = {
 function AcquiaHttpHmac() {};
 
 /**
- * Supported methods. Other HTTP methods are not supported by modern browsers due to insecurity.
+ * Supported methods. Other HTTP methods through XMLHttpRequest are not supported by modern browsers due to insecurity.
  *
  * @type string
  */
-AcquiaHttpHmac.supported_methods = '"GET" or "POST" or "PUT" or "DELETE" or "HEAD" or "OPTIONS" or "CUSTOM"';
+AcquiaHttpHmac.supported_methods = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'CUSTOM'];
 
 /**
  * Sign the request using provided parameters.
@@ -47,8 +47,8 @@ AcquiaHttpHmac.sign = function(request, method, path, signed_headers, content_ty
   if (!(request instanceof XMLHttpRequest)) {
     throw new Error('The request must be a XMLHttpRequest.');
   }
-  if (method.indexOf(' ') >= 0 || this.supported_methods.indexOf('"' + method + '"') < 0) {
-    throw new Error('The method must be ' + this.supported_methods + '. "' + method + '" is not supported.');
+  if (this.supported_methods.indexOf(method) < 0) {
+    throw new Error('The method must be "' + this.supported_methods.join('" or "') + '". "' + method + '" is not supported.');
   }
   if (!path) {
     throw new Error("The end point path must not be empty.");
