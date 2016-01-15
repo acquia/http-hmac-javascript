@@ -3,7 +3,7 @@
  */
 
 // Configure your local script.
-var method = 'POST';
+var method = 'POST'; // Can also be other methods here such as 'PUT'.
 var path = 'http://localhost:9000/http-hmac-javascript/example/post.endpoint.php?myQueryParameter=90210#myAnchor';
 var signed_headers = {
   'special-header-1': 'special_header_1_value',

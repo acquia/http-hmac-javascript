@@ -3,7 +3,7 @@
  */
 
 // Configure your local script.
-var method = 'GET';
+var method = 'GET'; // Can also be other methods here such as 'HEAD'.
 var path = 'http://localhost:9000/http-hmac-javascript/example/get.endpoint.php?first_word=Hello&second_word=World#myAnchor';
 var signed_headers = {
   'special-header-1': 'special_header_1_value',

@@ -19,12 +19,19 @@ var AcquiaHttpHmacConfig = {
 function AcquiaHttpHmac() {};
 
 /**
+ * Supported methods. Other HTTP methods are not supported by modern browsers due to insecurity.
+ *
+ * @type string
+ */
+AcquiaHttpHmac.supported_methods = '"GET" or "POST" or "PUT" or "DELETE" or "HEAD" or "OPTIONS" or "CUSTOM"';
+
+/**
  * Sign the request using provided parameters.
  *
  * @param {XMLHttpRequest} request
  *   The request to be signed.
  * @param {string} method
- *   Must be 'GET' or 'POST'.
+ *   Must be defined in the supported_methods.
  * @param {string} path
  *   End point's full URL path.
  * @param {object} signed_headers
@@ -38,10 +45,10 @@ function AcquiaHttpHmac() {};
 AcquiaHttpHmac.sign = function(request, method, path, signed_headers, content_type, body) {
   // Validate input. First 3 parameters are mandatory.
   if (!(request instanceof XMLHttpRequest)) {
-    throw new Error("The request must be a XMLHttpRequest.");
+    throw new Error('The request must be a XMLHttpRequest.');
   }
-  if (method !== 'GET' && method !== 'POST') {
-    throw new Error("The method must be 'GET' or 'POST'.");
+  if (method.indexOf(' ') >= 0 || this.supported_methods.indexOf('"' + method + '"') < 0) {
+    throw new Error('The method must be ' + this.supported_methods + '. "' + method + '" is not supported.');
   }
   if (!path) {
     throw new Error("The end point path must not be empty.");
@@ -98,14 +105,14 @@ AcquiaHttpHmac.sign = function(request, method, path, signed_headers, content_ty
   }
 
   var signature_base_string =
-        method + "\n" +
-        parser.hostname + (parser.port ? ':' + parser.port : '') + "\n" +
-        parser.pathname + "\n" +
-        parser.search.substring(1) + "\n" +
-        parametersToString(authorization_parameters) + "\n" +
-        parametersToString(signed_headers, ':') + "\n" +
-        x_authorization_timestamp + "\n" +
-        content_type + "\n" +
+        method + '\n' +
+        parser.hostname + (parser.port ? ':' + parser.port : '') + '\n' +
+        parser.pathname + '\n' +
+        parser.search.substring(1) + '\n' +
+        parametersToString(authorization_parameters) + '\n' +
+        parametersToString(signed_headers, ':') + '\n' +
+        x_authorization_timestamp + '\n' +
+        content_type + '\n' +
         x_authorization_content_sha256,
       authorization_string = parametersToString(authorization_parameters, '="', '"', ','),
       signed_headers_string = Object.keys(signed_headers).join(),
@@ -130,8 +137,8 @@ AcquiaHttpHmac.sign = function(request, method, path, signed_headers, content_ty
  *   TRUE if the request is valid; FALSE otherwise.
  */
 AcquiaHttpHmac.isValid = function(request) {
-  var signature_base_string = AcquiaHttpHmacConfig.nonce + "\n" +
-        request.x_authorization_timestamp + "\n" +
+  var signature_base_string = AcquiaHttpHmacConfig.nonce + '\n' +
+        request.x_authorization_timestamp + '\n' +
         request.responseText,
       signature = CryptoJS.HmacSHA256(signature_base_string, AcquiaHttpHmacConfig.secretKey).toString(CryptoJS.enc.Base64),
       server_signature = request.getResponseHeader('X-Server-Authorization-HMAC-SHA256');
