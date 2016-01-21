@@ -3,22 +3,25 @@
  */
 
 // Configure your local script.
-var method = 'POST'; // Can also be other methods here such as 'PUT'.
-var path = 'http://localhost:9000/http-hmac-javascript/example/post.endpoint.php?myQueryParameter=90210#myAnchor';
-var signed_headers = {
+let method = 'POST'; // Can also be other methods here such as 'PUT'.
+let path = 'http://localhost:9000/http-hmac-javascript/example/post.endpoint.php?myQueryParameter=90210#myAnchor';
+let signed_headers = {
   'special-header-1': 'special_header_1_value',
   'special-header-2': 'special_header_2_value'
 };
-var content_type = 'application/x-www-form-urlencoded';
-var body = 'first_word=Hello&second_word=World';
+let content_type = 'application/x-www-form-urlencoded';
+let body = 'first_word=Hello&second_word=World';
 
-// Configure AcquiaHttpHmac library's config object.
-AcquiaHttpHmac.config.clientId = 'ABCD-1234';
-AcquiaHttpHmac.config.secretKey = 'd175024aa4c4d8b312a7114687790c772dd94fb725cb68016aaeae5a76d68102';
-AcquiaHttpHmac.config.realm = 'dice';
+// Create HMAC instance.
+let hmac_config = {
+  client_id: 'ABCD-1234',
+  secret_key: 'd175024aa4c4d8b312a7114687790c772dd94fb725cb68016aaeae5a76d68102',
+  realm: 'dice'
+};
+const HMAC = new AcquiaHttpHmac(hmac_config);
 
 // Create and configure the request.
-var request = new XMLHttpRequest();
+let request = new XMLHttpRequest();
 request.onreadystatechange = state_change;
 request.open(method, path, true);
 request.setRequestHeader('Content-Type', content_type);
@@ -29,7 +32,7 @@ request.setRequestHeader('Special-Header-2', 'special_header_2_value');
 request.setRequestHeader('Special-Header-3', 'special_header_2_value');
 
 // Sign the request using AcquiaHttpHmac.sign().
-AcquiaHttpHmac.sign(request, method, path, signed_headers, content_type, body);
+HMAC.sign(request, method, path, signed_headers, content_type, body);
 
 // Send the request.
 request.send(body);
@@ -44,7 +47,7 @@ function state_change() {
     }
 
     // Validate the request's response.
-    if (!AcquiaHttpHmac.hasValidResponse(request)) {
+    if (!HMAC.hasValidResponse(request)) {
       throw new Error('The request does not have a valid response.', request);
       return;
     }

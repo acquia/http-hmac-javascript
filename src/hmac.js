@@ -3,151 +3,165 @@
 /**
  * AcquiaHttpHmac - Let's you sign a XMLHttpRequest object by Acquia's HTTP HMAC Spec.
  * For more information, see: https://github.com/acquia/http-hmac-spec/tree/2.0
- *
- * @constructor
  */
-function AcquiaHttpHmac() {}
+class AcquiaHttpHmac {
+  /**
+   * Constructor.
+   *
+   * @constructor
+   * @param config
+   */
+  constructor(config) {
+    /**
+     * The class' default config.
+     *
+     * @type string
+     */
+    this.DEFAULT_VARIABLE = {
+      client_id: '',
+      secret_key: '',
+      nonce: 'd1954337-5319-4821-8427-115542e08d10',
+      realm: '',
+      version: '2.0',
+      default_content_type: 'application/json'
+    };
 
-/**
- * Config. The global config object for AcquiaHttpHmac library.
- *
- * @type object
- */
-AcquiaHttpHmac.config = {
-  client_id: '',
-  secret_key: '',
-  nonce: 'd1954337-5319-4821-8427-115542e08d10',
-  realm: '',
-  version: '2.0',
-  default_content_type: 'application/json'
-};
+    /**
+     * Supported methods. Other HTTP methods through XMLHttpRequest are not supported by modern browsers due to insecurity.
+     *
+     * @type array
+     */
+    this.SUPPORTED_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'CUSTOM'];
 
-/**
- * Supported methods. Other HTTP methods through XMLHttpRequest are not supported by modern browsers due to insecurity.
- *
- * @type string
- */
-AcquiaHttpHmac.supported_methods = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'CUSTOM'];
-
-/**
- * Sign the request using provided parameters.
- *
- * @param {XMLHttpRequest} request
- *   The request to be signed.
- * @param {string} method
- *   Must be defined in the supported_methods.
- * @param {string} path
- *   End point's full URL path.
- * @param {object} signed_headers
- *   Signed headers.
- * @param {string} content_type
- *   Content type.
- * @param {string} body
- *   Body.
- * @returns {string}
- */
-AcquiaHttpHmac.sign = function(request, method, path, signed_headers, content_type, body) {
-  // Validate input. First 3 parameters are mandatory.
-  if (!(request instanceof XMLHttpRequest)) {
-    throw new Error('The request must be a XMLHttpRequest.');
+    this.config = {}
+    this.config['client_id'] = config['client_id'] || this.DEFAULT_VARIABLE['client_id'];
+    this.config['secret_key'] = config['secret_key'] || this.DEFAULT_VARIABLE['secret_key'];
+    this.config['nonce'] = config['nonce'] || this.DEFAULT_VARIABLE['nonce'];
+    this.config['realm'] = config['realm'] || this.DEFAULT_VARIABLE['realm'];
+    this.config['version'] = config['version'] || this.DEFAULT_VARIABLE['version'];
+    this.config['default_content_type'] = config['default_content_type'] || this.DEFAULT_VARIABLE['default_content_type'];
   }
-  if (this.supported_methods.indexOf(method) < 0) {
-    throw new Error('The method must be "' + this.supported_methods.join('" or "') + '". "' + method + '" is not supported.');
-  }
-  if (!path) {
-    throw new Error("The end point path must not be empty.");
-  }
-
-  // The rest of the parameters are optional and have default values.
-  signed_headers = signed_headers || {};
-  content_type = content_type || AcquiaHttpHmac.config.default_content_type;
-  body = body || '';
 
   /**
-   * Convert an object of parameters to a string.
+   * Sign the request using provided parameters.
    *
-   * @param {object} parameters
-   *   Header parameters in key: value pair.
-   * @param value_prefix
-   *   The parameter value's prefix decoration.
-   * @param value_suffix
-   *   The parameter value's suffix decoration.
-   * @param glue
-   *   When join(), use this string as the glue.
+   * @param {XMLHttpRequest} request
+   *   The request to be signed.
+   * @param {string} method
+   *   Must be defined in the supported_methods.
+   * @param {string} path
+   *   End point's full URL path.
+   * @param {object} signed_headers
+   *   Signed headers.
+   * @param {string} content_type
+   *   Content type.
+   * @param {string} body
+   *   Body.
    * @returns {string}
    */
-  let parametersToString = function(parameters, value_prefix, value_suffix, glue) {
-    value_prefix = value_prefix || '=';
-    value_suffix = value_suffix || '';
-    glue = glue || '&';
-
-    let parameters_array = [];
-    for (let parameter in parameters) {
-      if (!parameters.hasOwnProperty(parameter)) {
-        continue;
-      }
-      parameters_array.push(parameter + value_prefix + parameters[parameter] + value_suffix);
+  sign(request, method, path, signed_headers, content_type, body) {
+    // Validate input. First 3 parameters are mandatory.
+    if (!(request instanceof XMLHttpRequest)) {
+      throw new Error('The request must be a XMLHttpRequest.');
     }
-    return parameters_array.join(glue);
+    if (this.SUPPORTED_METHODS.indexOf(method) < 0) {
+      throw new Error('The method must be "' + this.SUPPORTED_METHODS.join('" or "') + '". "' + method + '" is not supported.');
+    }
+    if (!path) {
+      throw new Error("The end point path must not be empty.");
+    }
+
+    // The rest of the parameters are optional and have default values.
+    signed_headers = signed_headers || {};
+    content_type = content_type || this.config.default_content_type;
+    body = body || '';
+
+    /**
+     * Convert an object of parameters to a string.
+     *
+     * @param {object} parameters
+     *   Header parameters in key: value pair.
+     * @param value_prefix
+     *   The parameter value's prefix decoration.
+     * @param value_suffix
+     *   The parameter value's suffix decoration.
+     * @param glue
+     *   When join(), use this string as the glue.
+     * @returns {string}
+     */
+    let parametersToString = function(parameters, value_prefix, value_suffix, glue) {
+      value_prefix = value_prefix || '=';
+      value_suffix = value_suffix || '';
+      glue = glue || '&';
+
+      let parameters_array = [];
+      for (let parameter in parameters) {
+        if (!parameters.hasOwnProperty(parameter)) {
+          continue;
+        }
+        parameters_array.push(parameter + value_prefix + parameters[parameter] + value_suffix);
+      }
+      return parameters_array.join(glue);
+    };
+
+    // Compute the authorization headers.
+    let parser = document.createElement('a'),
+        authorization_parameters = {
+          id: this.config.client_id,
+          nonce: this.config.nonce,
+          realm: this.config.realm,
+          version: this.config.version
+        },
+        x_authorization_timestamp = Math.floor(Date.now() / 1000).toString(),
+        x_authorization_content_sha256 = '';
+
+    parser.href = path;
+    if (method !== 'GET' && body.length !== 0) {
+      x_authorization_content_sha256 = CryptoJS.SHA256(body, this.config.secret_key).toString(CryptoJS.enc.Base64);
+    }
+
+    let signature_base_string =
+          method + '\n' +
+          parser.hostname + (parser.port ? ':' + parser.port : '') + '\n' +
+          parser.pathname + '\n' +
+          parser.search.substring(1) + '\n' +
+          parametersToString(authorization_parameters) + '\n' +
+          parametersToString(signed_headers, ':') + '\n' +
+          x_authorization_timestamp + '\n' +
+          content_type + '\n' +
+          x_authorization_content_sha256,
+        authorization_string = parametersToString(authorization_parameters, '="', '"', ','),
+        signed_headers_string = Object.keys(signed_headers).join(),
+        signature = CryptoJS.HmacSHA256(signature_base_string, this.config.secret_key).toString(CryptoJS.enc.Base64),
+        authorization = 'acquia-http-hmac ' + authorization_string + ',headers="' + signed_headers_string + '",signature="' + signature + '"';
+
+    // Set the authorizations headers.
+    request.x_authorization_timestamp = x_authorization_timestamp;
+    request.setRequestHeader('X-Authorization-Timestamp', x_authorization_timestamp);
+    request.setRequestHeader('Authorization', authorization);
+    if (x_authorization_content_sha256) {
+      request.setRequestHeader('X-Authorization-Content-SHA256', x_authorization_content_sha256);
+    }
   };
 
-  // Compute the authorization headers.
-  let parser = document.createElement('a'),
-      authorization_parameters = {
-        id: AcquiaHttpHmac.config.clientId,
-        nonce: AcquiaHttpHmac.config.nonce,
-        realm: AcquiaHttpHmac.config.realm,
-        version: AcquiaHttpHmac.config.version
-      },
-      x_authorization_timestamp = Math.floor(Date.now() / 1000).toString(),
-      x_authorization_content_sha256 = '';
+  /**
+   * Check if the request has a valid response.
+   *
+   * @param {XMLHttpRequest} request
+   *   The request to be validated.
+   * @returns {boolean}
+   *   TRUE if the request is valid; FALSE otherwise.
+   */
+  hasValidResponse (request) {
+    let signature_base_string = this.config.nonce + '\n' +
+          request.x_authorization_timestamp + '\n' +
+          request.responseText,
+        signature = CryptoJS.HmacSHA256(signature_base_string, this.config.secret_key).toString(CryptoJS.enc.Base64),
+        server_signature = request.getResponseHeader('X-Server-Authorization-HMAC-SHA256');
 
-  parser.href = path;
-  if (method !== 'GET' && body.length !== 0) {
-    x_authorization_content_sha256 = CryptoJS.SHA256(body, AcquiaHttpHmac.config.secretKey).toString(CryptoJS.enc.Base64);
-  }
-
-  let signature_base_string =
-        method + '\n' +
-        parser.hostname + (parser.port ? ':' + parser.port : '') + '\n' +
-        parser.pathname + '\n' +
-        parser.search.substring(1) + '\n' +
-        parametersToString(authorization_parameters) + '\n' +
-        parametersToString(signed_headers, ':') + '\n' +
-        x_authorization_timestamp + '\n' +
-        content_type + '\n' +
-        x_authorization_content_sha256,
-      authorization_string = parametersToString(authorization_parameters, '="', '"', ','),
-      signed_headers_string = Object.keys(signed_headers).join(),
-      signature = CryptoJS.HmacSHA256(signature_base_string, AcquiaHttpHmac.config.secretKey).toString(CryptoJS.enc.Base64),
-      authorization = 'acquia-http-hmac ' + authorization_string + ',headers="' + signed_headers_string + '",signature="' + signature + '"';
-
-  // Set the authorizations headers.
-  request.x_authorization_timestamp = x_authorization_timestamp;
-  request.setRequestHeader('X-Authorization-Timestamp', x_authorization_timestamp);
-  request.setRequestHeader('Authorization', authorization);
-  if (x_authorization_content_sha256) {
-    request.setRequestHeader('X-Authorization-Content-SHA256', x_authorization_content_sha256);
-  }
-};
-
-/**
- * Check if the request has a valid response.
- *
- * @param {XMLHttpRequest} request
- *   The request to be validated.
- * @returns {boolean}
- *   TRUE if the request is valid; FALSE otherwise.
- */
-AcquiaHttpHmac.hasValidResponse = function(request) {
-  let signature_base_string = AcquiaHttpHmac.config.nonce + '\n' +
-        request.x_authorization_timestamp + '\n' +
-        request.responseText,
-      signature = CryptoJS.HmacSHA256(signature_base_string, AcquiaHttpHmac.config.secretKey).toString(CryptoJS.enc.Base64),
-      server_signature = request.getResponseHeader('X-Server-Authorization-HMAC-SHA256');
-
-  return signature === server_signature;
-};
+    return signature === server_signature;
+  };
+}
 
 // For IE8 compatibility.
 if (!Date.now) {
