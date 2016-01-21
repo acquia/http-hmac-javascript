@@ -13,9 +13,9 @@ var content_type = 'application/x-www-form-urlencoded';
 var body = 'first_word=Hello&second_word=World';
 
 // Configure AcquiaHttpHmac library's config object.
-AcquiaHttpHmacConfig.clientId = 'ABCD-1234';
-AcquiaHttpHmacConfig.secretKey = 'd175024aa4c4d8b312a7114687790c772dd94fb725cb68016aaeae5a76d68102';
-AcquiaHttpHmacConfig.realm = 'dice';
+AcquiaHttpHmac.config.clientId = 'ABCD-1234';
+AcquiaHttpHmac.config.secretKey = 'd175024aa4c4d8b312a7114687790c772dd94fb725cb68016aaeae5a76d68102';
+AcquiaHttpHmac.config.realm = 'dice';
 
 // Create and configure the request.
 var request = new XMLHttpRequest();

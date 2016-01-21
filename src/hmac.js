@@ -1,14 +1,4 @@
-/**
- * AcquiaHttpHmacConfig - The global config object for AcquiaHttpHmac library.
- */
-var AcquiaHttpHmacConfig = {
-  client_id: '',
-  secret_key: '',
-  nonce: 'd1954337-5319-4821-8427-115542e08d10',
-  realm: '',
-  version: '2.0',
-  default_content_type: 'application/json'
-};
+'use strict';
 
 /**
  * AcquiaHttpHmac - Let's you sign a XMLHttpRequest object by Acquia's HTTP HMAC Spec.
@@ -16,7 +6,21 @@ var AcquiaHttpHmacConfig = {
  *
  * @constructor
  */
-function AcquiaHttpHmac() {};
+function AcquiaHttpHmac() {}
+
+/**
+ * Config. The global config object for AcquiaHttpHmac library.
+ *
+ * @type object
+ */
+AcquiaHttpHmac.config = {
+  client_id: '',
+  secret_key: '',
+  nonce: 'd1954337-5319-4821-8427-115542e08d10',
+  realm: '',
+  version: '2.0',
+  default_content_type: 'application/json'
+};
 
 /**
  * Supported methods. Other HTTP methods through XMLHttpRequest are not supported by modern browsers due to insecurity.
@@ -56,7 +60,7 @@ AcquiaHttpHmac.sign = function(request, method, path, signed_headers, content_ty
 
   // The rest of the parameters are optional and have default values.
   signed_headers = signed_headers || {};
-  content_type = content_type || AcquiaHttpHmacConfig.default_content_type;
+  content_type = content_type || AcquiaHttpHmac.config.default_content_type;
   body = body || '';
 
   /**
@@ -72,14 +76,13 @@ AcquiaHttpHmac.sign = function(request, method, path, signed_headers, content_ty
    *   When join(), use this string as the glue.
    * @returns {string}
    */
-  var parametersToString = function(parameters, value_prefix, value_suffix, glue) {
+  let parametersToString = function(parameters, value_prefix, value_suffix, glue) {
     value_prefix = value_prefix || '=';
     value_suffix = value_suffix || '';
     glue = glue || '&';
 
-    var parameters_array = [],
-        parameter;
-    for (parameter in parameters) {
+    let parameters_array = [];
+    for (let parameter in parameters) {
       if (!parameters.hasOwnProperty(parameter)) {
         continue;
       }
@@ -89,22 +92,22 @@ AcquiaHttpHmac.sign = function(request, method, path, signed_headers, content_ty
   };
 
   // Compute the authorization headers.
-  var parser = document.createElement('a'),
+  let parser = document.createElement('a'),
       authorization_parameters = {
-        id: AcquiaHttpHmacConfig.clientId,
-        nonce: AcquiaHttpHmacConfig.nonce,
-        realm: AcquiaHttpHmacConfig.realm,
-        version: AcquiaHttpHmacConfig.version
+        id: AcquiaHttpHmac.config.clientId,
+        nonce: AcquiaHttpHmac.config.nonce,
+        realm: AcquiaHttpHmac.config.realm,
+        version: AcquiaHttpHmac.config.version
       },
       x_authorization_timestamp = Math.floor(Date.now() / 1000).toString(),
       x_authorization_content_sha256 = '';
 
   parser.href = path;
   if (method !== 'GET' && body.length !== 0) {
-    x_authorization_content_sha256 = CryptoJS.SHA256(body, AcquiaHttpHmacConfig.secretKey).toString(CryptoJS.enc.Base64);
+    x_authorization_content_sha256 = CryptoJS.SHA256(body, AcquiaHttpHmac.config.secretKey).toString(CryptoJS.enc.Base64);
   }
 
-  var signature_base_string =
+  let signature_base_string =
         method + '\n' +
         parser.hostname + (parser.port ? ':' + parser.port : '') + '\n' +
         parser.pathname + '\n' +
@@ -116,7 +119,7 @@ AcquiaHttpHmac.sign = function(request, method, path, signed_headers, content_ty
         x_authorization_content_sha256,
       authorization_string = parametersToString(authorization_parameters, '="', '"', ','),
       signed_headers_string = Object.keys(signed_headers).join(),
-      signature = CryptoJS.HmacSHA256(signature_base_string, AcquiaHttpHmacConfig.secretKey).toString(CryptoJS.enc.Base64),
+      signature = CryptoJS.HmacSHA256(signature_base_string, AcquiaHttpHmac.config.secretKey).toString(CryptoJS.enc.Base64),
       authorization = 'acquia-http-hmac ' + authorization_string + ',headers="' + signed_headers_string + '",signature="' + signature + '"';
 
   // Set the authorizations headers.
@@ -137,14 +140,14 @@ AcquiaHttpHmac.sign = function(request, method, path, signed_headers, content_ty
  *   TRUE if the request is valid; FALSE otherwise.
  */
 AcquiaHttpHmac.hasValidResponse = function(request) {
-  var signature_base_string = AcquiaHttpHmacConfig.nonce + '\n' +
+  let signature_base_string = AcquiaHttpHmac.config.nonce + '\n' +
         request.x_authorization_timestamp + '\n' +
         request.responseText,
-      signature = CryptoJS.HmacSHA256(signature_base_string, AcquiaHttpHmacConfig.secretKey).toString(CryptoJS.enc.Base64),
+      signature = CryptoJS.HmacSHA256(signature_base_string, AcquiaHttpHmac.config.secretKey).toString(CryptoJS.enc.Base64),
       server_signature = request.getResponseHeader('X-Server-Authorization-HMAC-SHA256');
 
   return signature === server_signature;
-}
+};
 
 // For IE8 compatibility.
 if (!Date.now) {
