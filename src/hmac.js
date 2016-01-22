@@ -17,10 +17,9 @@ class AcquiaHttpHmac {
      *
      * @type string
      */
-    this.DEFAULT_VARIABLE = {
-      client_id: '',
+    this.DEFAULT_CONFIG = {
+      public_key: '',
       secret_key: '',
-      nonce: 'd1954337-5319-4821-8427-115542e08d10',
       realm: '',
       version: '2.0',
       default_content_type: 'application/json'
@@ -33,13 +32,12 @@ class AcquiaHttpHmac {
      */
     this.SUPPORTED_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'CUSTOM'];
 
-    this.config = {}
-    this.config['client_id'] = config['client_id'] || this.DEFAULT_VARIABLE['client_id'];
-    this.config['secret_key'] = config['secret_key'] || this.DEFAULT_VARIABLE['secret_key'];
-    this.config['nonce'] = config['nonce'] || this.DEFAULT_VARIABLE['nonce'];
-    this.config['realm'] = config['realm'] || this.DEFAULT_VARIABLE['realm'];
-    this.config['version'] = config['version'] || this.DEFAULT_VARIABLE['version'];
-    this.config['default_content_type'] = config['default_content_type'] || this.DEFAULT_VARIABLE['default_content_type'];
+    this.config = {};
+    this.config['public_key'] = config['public_key'] || this.DEFAULT_CONFIG['public_key'];
+    this.config['secret_key'] = config['secret_key'] || this.DEFAULT_CONFIG['secret_key'];
+    this.config['realm'] = config['realm'] || this.DEFAULT_CONFIG['realm'];
+    this.config['version'] = config['version'] || this.DEFAULT_CONFIG['version'];
+    this.config['default_content_type'] = config['default_content_type'] || this.DEFAULT_CONFIG['default_content_type'];
   }
 
   /**
@@ -104,11 +102,26 @@ class AcquiaHttpHmac {
       return parameters_array.join(glue);
     };
 
+    /**
+     * Generate a UUID nonce.
+     *
+     * @returns {string}
+     */
+    let generateNonce = function () {
+      let d = new Date().getTime();
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = (d + Math.random()*16)%16 | 0;
+        d = Math.floor(d/16);
+        return (c=='x' ? r : (r&0x7|0x8)).toString(16);
+      });
+    };
+
     // Compute the authorization headers.
-    let parser = document.createElement('a'),
+    let nonce = generateNonce(),
+        parser = document.createElement('a'),
         authorization_parameters = {
-          id: this.config.client_id,
-          nonce: this.config.nonce,
+          id: this.config.public_key,
+          nonce: nonce,
           realm: this.config.realm,
           version: this.config.version
         },
@@ -136,7 +149,9 @@ class AcquiaHttpHmac {
         authorization = 'acquia-http-hmac ' + authorization_string + ',headers="' + signed_headers_string + '",signature="' + signature + '"';
 
     // Set the authorizations headers.
-    request.x_authorization_timestamp = x_authorization_timestamp;
+    request.acquiaHttpHmac = {};
+    request.acquiaHttpHmac.timestamp = x_authorization_timestamp;
+    request.acquiaHttpHmac.nonce = nonce;
     request.setRequestHeader('X-Authorization-Timestamp', x_authorization_timestamp);
     request.setRequestHeader('Authorization', authorization);
     if (x_authorization_content_sha256) {
@@ -153,8 +168,8 @@ class AcquiaHttpHmac {
    *   TRUE if the request is valid; FALSE otherwise.
    */
   hasValidResponse (request) {
-    let signature_base_string = this.config.nonce + '\n' +
-          request.x_authorization_timestamp + '\n' +
+    let signature_base_string = request.acquiaHttpHmac.nonce + '\n' +
+          request.acquiaHttpHmac.timestamp + '\n' +
           request.responseText,
         signature = CryptoJS.HmacSHA256(signature_base_string, this.config.secret_key).toString(CryptoJS.enc.Base64),
         server_signature = request.getResponseHeader('X-Server-Authorization-HMAC-SHA256');
