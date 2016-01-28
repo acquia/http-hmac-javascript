@@ -34,7 +34,7 @@ class AcquiaHttpHmac {
 
     this.config = {};
     this.config['public_key'] = config['public_key'] || this.DEFAULT_CONFIG['public_key'];
-    this.config['secret_key'] = config['secret_key'] || this.DEFAULT_CONFIG['secret_key'];
+    this.config['secret_key'] = CryptoJS.enc.Base64.parse(config['secret_key']) || this.DEFAULT_CONFIG['secret_key'];
     this.config['realm'] = config['realm'] || this.DEFAULT_CONFIG['realm'];
     this.config['version'] = config['version'] || this.DEFAULT_CONFIG['version'];
     this.config['default_content_type'] = config['default_content_type'] || this.DEFAULT_CONFIG['default_content_type'];
@@ -116,6 +116,22 @@ class AcquiaHttpHmac {
       });
     };
 
+    /**
+     * Determine if this request sends body content (or skips silently).
+     *
+     * Note: modern browsers always skip body at send(), when the request method is "GET" or "HEAD".
+     *
+     * @param body
+     *   Body content.
+     * @param method
+     *   The request's method.
+     * @returns {boolean}
+     */
+    let willSendBody = function(body, method) {
+      let bodyless_request_types = ['GET', 'HEAD'];
+      return body.length !== 0 && bodyless_request_types.indexOf(method) < 0;
+    };
+
     // Compute the authorization headers.
     let nonce = generateNonce(),
         parser = document.createElement('a'),
@@ -126,12 +142,10 @@ class AcquiaHttpHmac {
           version: this.config.version
         },
         x_authorization_timestamp = Math.floor(Date.now() / 1000).toString(),
-        x_authorization_content_sha256 = '';
+        x_authorization_content_sha256 = willSendBody(body, method) ? CryptoJS.SHA256(body).toString(CryptoJS.enc.Base64) : '',
+        signature_base_string_content_suffix = willSendBody(body, method) ? '\n' + content_type + '\n' + x_authorization_content_sha256 : '';
 
     parser.href = path;
-    if (method !== 'GET' && body.length !== 0) {
-      x_authorization_content_sha256 = CryptoJS.SHA256(body, this.config.secret_key).toString(CryptoJS.enc.Base64);
-    }
 
     let signature_base_string =
           method + '\n' +
@@ -139,14 +153,12 @@ class AcquiaHttpHmac {
           parser.pathname + '\n' +
           parser.search.substring(1) + '\n' +
           parametersToString(authorization_parameters) + '\n' +
-          parametersToString(signed_headers, ':') + '\n' +
-          x_authorization_timestamp + '\n' +
-          content_type + '\n' +
-          x_authorization_content_sha256,
+          x_authorization_timestamp +
+          signature_base_string_content_suffix,
         authorization_string = parametersToString(authorization_parameters, '="', '"', ','),
-        signed_headers_string = Object.keys(signed_headers).join(),
+        authorization_signed_header_postfix = Object.keys(signed_headers).length === 0 ? '' : ',headers="' + Object.keys(signed_headers).join() + '"',
         signature = CryptoJS.HmacSHA256(signature_base_string, this.config.secret_key).toString(CryptoJS.enc.Base64),
-        authorization = 'acquia-http-hmac ' + authorization_string + ',headers="' + signed_headers_string + '",signature="' + signature + '"';
+        authorization = 'acquia-http-hmac ' + authorization_string + ',signature="' + signature + '"' + authorization_signed_header_postfix;
 
     // Set the authorizations headers.
     request.acquiaHttpHmac = {};

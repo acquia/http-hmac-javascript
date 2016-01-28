@@ -28,7 +28,7 @@ request.setRequestHeader('Content-Type', content_type);
 // The first two headers are the signed headers.
 request.setRequestHeader('Special-Header-1', 'special_header_1_value');
 request.setRequestHeader('Special-Header-2', 'special_header_2_value');
-request.setRequestHeader('Special-Header-3', 'special_header_2_value');
+request.setRequestHeader('Special-Header-3', 'special_header_3_value');
 
 // Sign the request using AcquiaHttpHmac.sign().
 HMAC.sign(request, method, path, signed_headers, content_type);
@@ -41,7 +41,7 @@ function state_change() {
   if (request.readyState == 4) {
     // Check if the response status is 200 ok.
     if (request.status !== 200) {
-      throw new Error('Problem retrieving XML data.', request);
+      throw new Error('Problem retrieving data.', request);
       return;
     }
 
