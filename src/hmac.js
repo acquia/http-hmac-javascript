@@ -57,7 +57,7 @@ class AcquiaHttpHmac {
    *   Body.
    * @returns {string}
    */
-  sign(request, method, path, signed_headers, content_type, body) {
+  sign(request, method, path, signed_headers = {}, content_type = this.config.default_content_type, body = '') {
     // Validate input. First 3 parameters are mandatory.
     if (!(request instanceof XMLHttpRequest)) {
       throw new Error('The request must be a XMLHttpRequest.');
@@ -68,11 +68,6 @@ class AcquiaHttpHmac {
     if (!path) {
       throw new Error("The end point path must not be empty.");
     }
-
-    // The rest of the parameters are optional and have default values.
-    signed_headers = signed_headers || {};
-    content_type = content_type || this.config.default_content_type;
-    body = body || '';
 
     /**
      * Convert an object of parameters to a string.
@@ -87,11 +82,7 @@ class AcquiaHttpHmac {
      *   When join(), use this string as the glue.
      * @returns {string}
      */
-    let parametersToString = (parameters, value_prefix, value_suffix, glue) => {
-      value_prefix = value_prefix || '=';
-      value_suffix = value_suffix || '';
-      glue = glue || '&';
-
+    let parametersToString = (parameters, value_prefix = '=', value_suffix = '', glue = '&') => {
       let parameters_array = [];
       for (let parameter in parameters) {
         if (!parameters.hasOwnProperty(parameter)) {
