@@ -63,7 +63,7 @@ class AcquiaHttpHmac {
       throw new Error('The request must be a XMLHttpRequest.');
     }
     if (this.SUPPORTED_METHODS.indexOf(method) < 0) {
-      throw new Error('The method must be "' + this.SUPPORTED_METHODS.join('" or "') + '". "' + method + '" is not supported.');
+      throw new Error(`The method must be "${this.SUPPORTED_METHODS.join('" or "')}". "${method}" is not supported.`);
     }
     if (!path) {
       throw new Error("The end point path must not be empty.");
@@ -97,7 +97,7 @@ class AcquiaHttpHmac {
         if (!parameters.hasOwnProperty(parameter)) {
           continue;
         }
-        parameters_array.push(parameter + value_prefix + parameters[parameter] + value_suffix);
+        parameters_array.push(`${parameter}${value_prefix}${parameters[parameter]}${value_suffix}`);
       }
       return parameters_array.join(glue);
     };
@@ -143,22 +143,18 @@ class AcquiaHttpHmac {
         },
         x_authorization_timestamp = Math.floor(Date.now() / 1000).toString(),
         x_authorization_content_sha256 = willSendBody(body, method) ? CryptoJS.SHA256(body).toString(CryptoJS.enc.Base64) : '',
-        signature_base_string_content_suffix = willSendBody(body, method) ? '\n' + content_type + '\n' + x_authorization_content_sha256 : '';
+        signature_base_string_content_suffix = willSendBody(body, method) ? `\n${content_type}\n${x_authorization_content_sha256}` : '';
 
     parser.href = path;
 
-    let signature_base_string =
-          method + '\n' +
-          parser.hostname + (parser.port ? ':' + parser.port : '') + '\n' +
-          parser.pathname + '\n' +
-          parser.search.substring(1) + '\n' +
-          parametersToString(authorization_parameters) + '\n' +
-          x_authorization_timestamp +
-          signature_base_string_content_suffix,
+    let site_port = parser.port ? `:${parser.port}` : '',
+        site_name_and_port = `${parser.hostname}${site_port}`,
+        url_query_string = parser.search.substring(1),
+        signature_base_string = `${method}\n${site_name_and_port}\n${parser.pathname}\n${url_query_string}\n${parametersToString(authorization_parameters)}\n${x_authorization_timestamp}${signature_base_string_content_suffix}`,
         authorization_string = parametersToString(authorization_parameters, '="', '"', ','),
-        authorization_signed_header_postfix = Object.keys(signed_headers).length === 0 ? '' : ',headers="' + Object.keys(signed_headers).join() + '"',
+        authorization_signed_header_postfix = Object.keys(signed_headers).length === 0 ? '' : `,headers="${Object.keys(signed_headers).join()}"`,
         signature = CryptoJS.HmacSHA256(signature_base_string, this.config.secret_key).toString(CryptoJS.enc.Base64),
-        authorization = 'acquia-http-hmac ' + authorization_string + ',signature="' + signature + '"' + authorization_signed_header_postfix;
+        authorization = `acquia-http-hmac ${authorization_string},signature="${signature}"${authorization_signed_header_postfix}`;
 
     // Set the authorizations headers.
     request.acquiaHttpHmac = {};
@@ -180,9 +176,7 @@ class AcquiaHttpHmac {
    *   TRUE if the request is valid; FALSE otherwise.
    */
   hasValidResponse (request) {
-    let signature_base_string = request.acquiaHttpHmac.nonce + '\n' +
-          request.acquiaHttpHmac.timestamp + '\n' +
-          request.responseText,
+    let signature_base_string = `${request.acquiaHttpHmac.nonce}\n${request.acquiaHttpHmac.timestamp}\n${request.responseText}`,
         signature = CryptoJS.HmacSHA256(signature_base_string, this.config.secret_key).toString(CryptoJS.enc.Base64),
         server_signature = request.getResponseHeader('X-Server-Authorization-HMAC-SHA256');
 
