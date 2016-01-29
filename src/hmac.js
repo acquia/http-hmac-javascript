@@ -186,7 +186,7 @@ class AcquiaHttpHmac {
 
 // For IE8 compatibility.
 if (!Date.now) {
-  Date.now = () => { return new Date().getTime(); }
+  Date.now = () => new Date().getTime();
 }
 
 /*
