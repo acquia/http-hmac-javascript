@@ -87,7 +87,7 @@ class AcquiaHttpHmac {
      *   When join(), use this string as the glue.
      * @returns {string}
      */
-    let parametersToString = function(parameters, value_prefix, value_suffix, glue) {
+    let parametersToString = (parameters, value_prefix, value_suffix, glue) => {
       value_prefix = value_prefix || '=';
       value_suffix = value_suffix || '';
       glue = glue || '&';
@@ -107,9 +107,9 @@ class AcquiaHttpHmac {
      *
      * @returns {string}
      */
-    let generateNonce = function () {
+    let generateNonce = () => {
       let d = new Date().getTime();
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
         var r = (d + Math.random()*16)%16 | 0;
         d = Math.floor(d/16);
         return (c=='x' ? r : (r&0x7|0x8)).toString(16);
@@ -127,7 +127,7 @@ class AcquiaHttpHmac {
      *   The request's method.
      * @returns {boolean}
      */
-    let willSendBody = function(body, method) {
+    let willSendBody = (body, method) => {
       let bodyless_request_types = ['GET', 'HEAD'];
       return body.length !== 0 && bodyless_request_types.indexOf(method) < 0;
     };
@@ -192,7 +192,7 @@ class AcquiaHttpHmac {
 
 // For IE8 compatibility.
 if (!Date.now) {
-  Date.now = function() { return new Date().getTime(); }
+  Date.now = () => { return new Date().getTime(); }
 }
 
 /*

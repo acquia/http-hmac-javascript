@@ -22,23 +22,8 @@ const HMAC = new AcquiaHttpHmac(hmac_config);
 
 // Create and configure the request.
 let request = new XMLHttpRequest();
-request.onreadystatechange = state_change;
-request.open(method, path, true);
-request.setRequestHeader('Content-Type', content_type);
-
-// The first two headers are the signed headers.
-request.setRequestHeader('Special-Header-1', 'special_header_1_value');
-request.setRequestHeader('Special-Header-2', 'special_header_2_value');
-request.setRequestHeader('Special-Header-3', 'special_header_3_value');
-
-// Sign the request using AcquiaHttpHmac.sign().
-HMAC.sign(request, method, path, signed_headers, content_type, body);
-
-// Send the request.
-request.send(body);
-
 // Define the state change action.
-function state_change() {
+request.onreadystatechange = () => {
   if (request.readyState == 4) {
     // Check if the response status is 200 ok.
     if (request.status !== 200) {
@@ -55,4 +40,18 @@ function state_change() {
     // Finally, carry out the intended change.
     document.getElementById('text-display').innerHTML = request.response;
   }
-}
+};
+request.open(method, path, true);
+request.setRequestHeader('Content-Type', content_type);
+
+// The first two headers are the signed headers.
+request.setRequestHeader('Special-Header-1', 'special_header_1_value');
+request.setRequestHeader('Special-Header-2', 'special_header_2_value');
+request.setRequestHeader('Special-Header-3', 'special_header_3_value');
+
+// Sign the request using AcquiaHttpHmac.sign().
+HMAC.sign(request, method, path, signed_headers, content_type, body);
+
+// Send the request.
+request.send(body);
+
