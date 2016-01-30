@@ -9,7 +9,16 @@ class AcquiaHttpHmac {
    * Constructor.
    *
    * @constructor
-   * @param config
+   * @param {string} Realm
+   *   The provider.
+   * @param {string} public_key
+   *   Public key.
+   * @param {string} secret_key
+   *   Secret key.
+   * @param {string} version
+   *   Authenticator version.
+   * @param {string} default_content_type
+   *   Default content type of all signings (other than specified during signing).
    */
   constructor({realm, public_key, secret_key, version = '2.0', default_content_type = 'application/json'}) {
     if (!realm) {
@@ -50,7 +59,7 @@ class AcquiaHttpHmac {
    *   Body.
    * @returns {string}
    */
-  sign(request, method, path, signed_headers = {}, content_type = this.config.default_content_type, body = '') {
+  sign({request, method, path, signed_headers = {}, content_type = this.config.default_content_type, body = ''}) {
     // Validate input. First 3 parameters are mandatory.
     if (!(request instanceof XMLHttpRequest)) {
       throw new Error('The request must be a XMLHttpRequest.');

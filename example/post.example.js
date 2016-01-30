@@ -50,7 +50,8 @@ request.setRequestHeader('Special-Header-2', 'special_header_2_value');
 request.setRequestHeader('Special-Header-3', 'special_header_3_value');
 
 // Sign the request using AcquiaHttpHmac.sign().
-HMAC.sign(request, method, path, signed_headers, content_type, body);
+let sign_parameters = {request, method, path, signed_headers, content_type, body};
+HMAC.sign(sign_parameters);
 
 // Send the request.
 request.send(body);
