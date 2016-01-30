@@ -55,4 +55,3 @@ HMAC.sign(sign_parameters);
 
 // Send the request.
 request.send(body);
-
