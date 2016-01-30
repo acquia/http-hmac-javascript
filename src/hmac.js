@@ -11,19 +11,19 @@ class AcquiaHttpHmac {
    * @constructor
    * @param config
    */
-  constructor(config) {
-    /**
-     * The class' default config.
-     *
-     * @type string
-     */
-    this.DEFAULT_CONFIG = {
-      public_key: '',
-      secret_key: '',
-      realm: '',
-      version: '2.0',
-      default_content_type: 'application/json'
-    };
+  constructor({realm, public_key, secret_key, version = '2.0', default_content_type = 'application/json'}) {
+    if (!realm) {
+      throw new Error('The "realm" must not be empty.');
+    }
+    if (!public_key) {
+      throw new Error('The "public_key" must not be empty.');
+    }
+    if (!secret_key) {
+      throw new Error('The "secret_key" must not be empty.');
+    }
+
+    let parsed_secret_key = CryptoJS.enc.Base64.parse(secret_key);
+    this.config = {realm, public_key, parsed_secret_key, version, default_content_type};
 
     /**
      * Supported methods. Other HTTP methods through XMLHttpRequest are not supported by modern browsers due to insecurity.
@@ -31,13 +31,6 @@ class AcquiaHttpHmac {
      * @type array
      */
     this.SUPPORTED_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'CUSTOM'];
-
-    this.config = {};
-    this.config['public_key'] = config['public_key'] || this.DEFAULT_CONFIG['public_key'];
-    this.config['secret_key'] = CryptoJS.enc.Base64.parse(config['secret_key']) || this.DEFAULT_CONFIG['secret_key'];
-    this.config['realm'] = config['realm'] || this.DEFAULT_CONFIG['realm'];
-    this.config['version'] = config['version'] || this.DEFAULT_CONFIG['version'];
-    this.config['default_content_type'] = config['default_content_type'] || this.DEFAULT_CONFIG['default_content_type'];
   }
 
   /**
@@ -66,7 +59,7 @@ class AcquiaHttpHmac {
       throw new Error(`The method must be "${this.SUPPORTED_METHODS.join('" or "')}". "${method}" is not supported.`);
     }
     if (!path) {
-      throw new Error("The end point path must not be empty.");
+      throw new Error('The end point path must not be empty.');
     }
 
     /**
@@ -144,7 +137,7 @@ class AcquiaHttpHmac {
         signature_base_string = `${method}\n${site_name_and_port}\n${parser.pathname}\n${url_query_string}\n${parametersToString(authorization_parameters)}\n${x_authorization_timestamp}${signature_base_string_content_suffix}`,
         authorization_string = parametersToString(authorization_parameters, '="', '"', ','),
         authorization_signed_header_postfix = Object.keys(signed_headers).length === 0 ? '' : `,headers="${Object.keys(signed_headers).join()}"`,
-        signature = CryptoJS.HmacSHA256(signature_base_string, this.config.secret_key).toString(CryptoJS.enc.Base64),
+        signature = CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64),
         authorization = `acquia-http-hmac ${authorization_string},signature="${signature}"${authorization_signed_header_postfix}`;
 
     // Set the authorizations headers.
@@ -168,7 +161,7 @@ class AcquiaHttpHmac {
    */
   hasValidResponse (request) {
     let signature_base_string = `${request.acquiaHttpHmac.nonce}\n${request.acquiaHttpHmac.timestamp}\n${request.responseText}`,
-        signature = CryptoJS.HmacSHA256(signature_base_string, this.config.secret_key).toString(CryptoJS.enc.Base64),
+        signature = CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64),
         server_signature = request.getResponseHeader('X-Server-Authorization-HMAC-SHA256');
 
     return signature === server_signature;

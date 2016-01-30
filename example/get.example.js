@@ -13,9 +13,9 @@ let content_type = 'text/plain';
 
 // Create HMAC instance.
 let hmac_config = {
+  realm: 'dice',
   public_key: 'ABCD-1234',
-  secret_key: 'd175024aa4c4d8b312a7114687790c772dd94fb725cb68016aaeae5a76d68102',
-  realm: 'dice'
+  secret_key: 'd175024aa4c4d8b312a7114687790c772dd94fb725cb68016aaeae5a76d68102'
 };
 const HMAC = new AcquiaHttpHmac(hmac_config);
 
