@@ -1,6 +1,8 @@
 var gulp = require('gulp');
 var babel = require('gulp-babel');
 var concat = require('gulp-concat');
+var uglify = require('gulp-uglify');
+var rename = require('gulp-rename');
 var del = require('del');
 
 gulp.task('clean-demo', function(){
@@ -18,6 +20,9 @@ gulp.task('build-lib',['clean-lib'], function(){
     .pipe(babel({
       presets: ['es2015']
     }))
+    .pipe(gulp.dest('./lib/es5'))
+    .pipe(rename('hmac.min.js'))
+    .pipe(uglify())
     .pipe(gulp.dest('./lib/es5'));
 });
 
