@@ -1,24 +1,50 @@
 var gulp = require('gulp');
 var babel = require('gulp-babel');
+var concat = require('gulp-concat');
 var del = require('del');
 
-gulp.task('clean-lib', function(){
-  return del(['lib']);
+gulp.task('clean-demo', function(){
+  return del(['./demo']);
 });
 
-gulp.task('es5',['clean-lib'], function(){
-    return gulp.src(['src/*.js','example/*.js'])
+gulp.task('clean-lib', function(){
+  return del(['./lib']);
+});
+
+gulp.task('build-lib',['clean-lib'], function(){
+  gulp.src(['./src/hmac.js'])
+    .pipe(concat('hmac.js'))
+    .pipe(gulp.dest('./lib/es6'))
     .pipe(babel({
       presets: ['es2015']
     }))
-    .pipe(gulp.dest('lib'));
+    .pipe(gulp.dest('./lib/es5'));
 });
 
-gulp.task('default', ['es5'], function() {
+gulp.task('build-demo',['clean-demo', 'build-lib'], function(){
+  gulp.src('./src/demo/*.html', {base: './src/demo'})
+    .pipe(gulp.dest('./demo'));
+  gulp.src('./src/demo/*.php', {base: './src/demo'})
+    .pipe(gulp.dest('./demo'));
+  gulp.src(['./src/hmac.js', './src/demo/get.js'])
+    .pipe(concat('get.app.js'))
+    .pipe(babel({
+      presets: ['es2015']
+    }))
+    .pipe(gulp.dest('./demo'));
+  gulp.src(['./src/hmac.js', './src/demo/post.js'])
+    .pipe(concat('post.app.js'))
+    .pipe(babel({
+      presets: ['es2015']
+    }))
+    .pipe(gulp.dest('./demo'));
+});
+
+gulp.task('default', ['build-demo'], function() {
   gulp.watch('src/*.js', function() {
-    gulp.run('es5');
+    gulp.run('build-demo');
   });
-  gulp.watch('example/*.js', function() {
-    gulp.run('es5');
+  gulp.watch('src/demo/*', function() {
+    gulp.run('build-demo');
   });
 });

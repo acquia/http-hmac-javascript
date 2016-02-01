@@ -1,15 +1,16 @@
 /**
- * @file get.example.js
+ * @file post.js
  */
 
 // Configure your local script.
-let method = 'GET'; // Can also be other methods here such as 'HEAD'.
-let path = 'http://localhost:9000/http-hmac-javascript/example/get.endpoint.php?first_word=Hello&second_word=World#myAnchor';
+let method = 'POST'; // Can also be other methods here such as 'PUT'.
+let path = 'http://localhost:9000/http-hmac-javascript/demo/post.php?myQueryParameter=90210#myAnchor';
 let signed_headers = {
   'special-header-1': 'special_header_1_value',
   'special-header-2': 'special_header_2_value'
 };
-let content_type = 'text/plain';
+let content_type = 'application/x-www-form-urlencoded';
+let body = 'first_word=Hello&second_word=World';
 
 // Create HMAC instance.
 let hmac_config = {
@@ -49,8 +50,8 @@ request.setRequestHeader('Special-Header-2', 'special_header_2_value');
 request.setRequestHeader('Special-Header-3', 'special_header_3_value');
 
 // Sign the request using AcquiaHttpHmac.sign().
-let sign_parameters = {request, method, path, signed_headers, content_type};
+let sign_parameters = {request, method, path, signed_headers, content_type, body};
 HMAC.sign(sign_parameters);
 
 // Send the request.
-request.send();
+request.send(body);
