@@ -5,9 +5,9 @@
 // Configure local caller script.
 let method = 'POST', // Can also be other methods here such as 'PUT'.
     port = location.port ? `:${location.port}` : '',
-    request_pathname = location.pathname.replace(/html$/, 'php'),
+    pathname = location.pathname.replace(/html$/, 'php'),
     // Example path: http://localhost:9000/http-hmac-javascript/demo/post.php?myQueryParameter=90210#myAnchor
-    path = `${location.protocol}//${location.hostname}${port}${request_pathname}?myQueryParameter=90210#myAnchor`,
+    path = `${location.protocol}//${location.hostname}${port}${pathname}?myQueryParameter=90210#myAnchor`,
     signed_headers = {
       'special-header-1': 'special_header_1_value',
       'special-header-2': 'special_header_2_value'
