@@ -1,8 +1,9 @@
 const gulp = require('gulp');
+const addsrc = require('gulp-add-src');
 const babel = require('gulp-babel');
 const concat = require('gulp-concat');
-const uglify = require('gulp-uglify');
 const rename = require('gulp-rename');
+const uglify = require('gulp-uglify');
 const del = require('del');
 
 gulp.task('clean-demo', () => {
@@ -15,7 +16,6 @@ gulp.task('clean-lib', () => {
 
 gulp.task('build-lib',['clean-lib'], () => {
   return gulp.src(['./src/hmac.js'])
-    .pipe(concat('hmac.js'))
     .pipe(gulp.dest('./lib/es6'))
     .pipe(babel({
       presets: ['es2015']
@@ -29,17 +29,21 @@ gulp.task('build-lib',['clean-lib'], () => {
 gulp.task('build-demo',['clean-demo', 'build-lib'], () => {
   gulp.src(['./src/demo/*.html', './src/demo/*.php'])
     .pipe(gulp.dest('./demo'));
-  gulp.src(['./lib/es6/hmac.js', './src/demo/get.js'])
+  gulp.src(['./src/demo/get.js'])
+    .pipe(babel({
+      presets: ['es2015']
+    }))
+    .pipe(addsrc.prepend(['./lib/es5/hmac.js', './node_modules/crypto-js/core.js', './node_modules/crypto-js/hmac.js', './node_modules/crypto-js/sha256.js', './node_modules/crypto-js/hmac-sha256.js', './node_modules/crypto-js/enc-base64.js']))
+    .pipe(uglify())
     .pipe(concat('get.app.js'))
-    .pipe(babel({
-      presets: ['es2015']
-    }))
     .pipe(gulp.dest('./demo'));
-  gulp.src(['./lib/es6/hmac.js', './src/demo/post.js'])
-    .pipe(concat('post.app.js'))
+  gulp.src(['./src/demo/post.js'])
     .pipe(babel({
       presets: ['es2015']
     }))
+    .pipe(addsrc.prepend(['./lib/es5/hmac.js', './node_modules/crypto-js/core.js', './node_modules/crypto-js/hmac.js', './node_modules/crypto-js/sha256.js', './node_modules/crypto-js/hmac-sha256.js', './node_modules/crypto-js/enc-base64.js']))
+    .pipe(uglify())
+    .pipe(concat('post.app.js'))
     .pipe(gulp.dest('./demo'));
 });
 
