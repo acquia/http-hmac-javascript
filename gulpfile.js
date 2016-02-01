@@ -6,15 +6,15 @@ const rename = require('gulp-rename');
 const del = require('del');
 
 gulp.task('clean-demo', () => {
-  del(['./demo']);
+  return del(['./demo']);
 });
 
 gulp.task('clean-lib', () => {
-  del(['./lib']);
+  return del(['./lib']);
 });
 
 gulp.task('build-lib',['clean-lib'], () => {
-  gulp.src(['./src/hmac.js'])
+  return gulp.src(['./src/hmac.js'])
     .pipe(concat('hmac.js'))
     .pipe(gulp.dest('./lib/es6'))
     .pipe(babel({
@@ -27,17 +27,15 @@ gulp.task('build-lib',['clean-lib'], () => {
 });
 
 gulp.task('build-demo',['clean-demo', 'build-lib'], () => {
-  gulp.src('./src/demo/*.html')
+  gulp.src(['./src/demo/*.html', './src/demo/*.php'])
     .pipe(gulp.dest('./demo'));
-  gulp.src('./src/demo/*.php')
-    .pipe(gulp.dest('./demo'));
-  gulp.src(['./src/hmac.js', './src/demo/get.js'])
+  gulp.src(['./lib/es6/hmac.js', './src/demo/get.js'])
     .pipe(concat('get.app.js'))
     .pipe(babel({
       presets: ['es2015']
     }))
     .pipe(gulp.dest('./demo'));
-  gulp.src(['./src/hmac.js', './src/demo/post.js'])
+  gulp.src(['./lib/es6/hmac.js', './src/demo/post.js'])
     .pipe(concat('post.app.js'))
     .pipe(babel({
       presets: ['es2015']
@@ -46,10 +44,7 @@ gulp.task('build-demo',['clean-demo', 'build-lib'], () => {
 });
 
 gulp.task('default', ['build-demo'], () => {
-  gulp.watch('src/*.js', () => {
-    gulp.run('build-demo');
-  });
-  gulp.watch('src/demo/*', () => {
+  gulp.watch(['src/*.js', 'src/demo/*'], () => {
     gulp.run('build-demo');
   });
 });
