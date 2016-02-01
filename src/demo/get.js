@@ -2,14 +2,17 @@
  * @file get.js
  */
 
-// Configure your local script.
-let method = 'GET'; // Can also be other methods here such as 'HEAD'.
-let path = 'http://localhost:9000/http-hmac-javascript/demo/get.php?first_word=Hello&second_word=World#myAnchor';
-let signed_headers = {
-  'special-header-1': 'special_header_1_value',
-  'special-header-2': 'special_header_2_value'
-};
-let content_type = 'text/plain';
+// Configure local caller script.
+let method = 'GET', // Can also be other methods here such as 'HEAD'.
+    port = location.port ? `:${location.port}` : '',
+    request_pathname = location.pathname.replace(/html$/, 'php'),
+    // Example path: http://localhost:9000/http-hmac-javascript/demo/get.php?first_word=Hello&second_word=World#myAnchor
+    path = `${location.protocol}//${location.hostname}${port}${request_pathname}?first_word=Hello&second_word=World#myAnchor`,
+    signed_headers = {
+      'special-header-1': 'special_header_1_value',
+      'special-header-2': 'special_header_2_value'
+    },
+    content_type = 'text/plain';
 
 // Create HMAC instance.
 let hmac_config = {
