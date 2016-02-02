@@ -2,9 +2,16 @@ const gulp = require('gulp');
 const addsrc = require('gulp-add-src');
 const babel = require('gulp-babel');
 const concat = require('gulp-concat');
+const qunit = require('gulp-qunit');
 const rename = require('gulp-rename');
+const stripDebug = require('gulp-strip-debug');
 const uglify = require('gulp-uglify');
 const del = require('del');
+
+gulp.task('test', ['build-lib'], function() {
+  return gulp.src('./qunit/hmac.html')
+    .pipe(qunit());
+});
 
 gulp.task('clean-demo', () => {
   return del(['./demo']);
@@ -14,8 +21,9 @@ gulp.task('clean-lib', () => {
   return del(['./lib']);
 });
 
-gulp.task('build-lib',['clean-lib'], () => {
+gulp.task('build-lib', ['clean-lib'], () => {
   return gulp.src(['./src/hmac.js'])
+    .pipe(stripDebug())
     .pipe(gulp.dest('./lib/es6'))
     .pipe(babel({
       presets: ['es2015']
@@ -26,7 +34,7 @@ gulp.task('build-lib',['clean-lib'], () => {
     .pipe(gulp.dest('./lib/es5'));
 });
 
-gulp.task('build-demo',['clean-demo', 'build-lib'], () => {
+gulp.task('build-demo', ['clean-demo', 'build-lib'], () => {
   gulp.src(['./src/demo/*.html', './src/demo/*.php'])
     .pipe(gulp.dest('./demo'));
   gulp.src(['./src/demo/get.js'])

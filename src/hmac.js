@@ -66,7 +66,7 @@ class AcquiaHttpHmac {
    */
   sign({request, method, path, signed_headers = {}, content_type = this.config.default_content_type, body = ''}) {
     // Validate input. First 3 parameters are mandatory.
-    if (!(request instanceof XMLHttpRequest)) {
+    if (!(request instanceof XMLHttpRequest) && !(typeof MockHttpRequest !== 'undefined' && request instanceof MockHttpRequest)) {
       throw new Error('The request must be a XMLHttpRequest.');
     }
     if (this.SUPPORTED_METHODS.indexOf(method) < 0) {
@@ -106,7 +106,7 @@ class AcquiaHttpHmac {
      * @returns {string}
      */
     let generateNonce = () => {
-      let d = new Date().getTime();
+      let d = Date.now();
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
         var r = (d + Math.random()*16)%16 | 0;
         d = Math.floor(d/16);
@@ -163,6 +163,12 @@ class AcquiaHttpHmac {
     if (x_authorization_content_sha256) {
       request.setRequestHeader('X-Authorization-Content-SHA256', x_authorization_content_sha256);
     }
+
+    console.log('signature_base_string', signature_base_string);
+    console.log('authorization', authorization);
+    console.log('x_authorization_timestamp', x_authorization_timestamp);
+    console.log('nonce', nonce);
+    console.log('x_authorization_content_sha256', x_authorization_content_sha256);
   };
 
   /**
@@ -177,6 +183,10 @@ class AcquiaHttpHmac {
     let signature_base_string = `${request.acquiaHttpHmac.nonce}\n${request.acquiaHttpHmac.timestamp}\n${request.responseText}`,
         signature = CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64),
         server_signature = request.getResponseHeader('X-Server-Authorization-HMAC-SHA256');
+
+    console.log('signature_base_string', signature_base_string);
+    console.log('signature ', signature);
+    console.log('server_signature', server_signature);
 
     return signature === server_signature;
   };
