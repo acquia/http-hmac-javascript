@@ -3,6 +3,8 @@
 HMAC Request Signer is a JavaScript library that implements the version 2.0 of the [HTTP HMAC Spec](https://github.com/acquia/http-hmac-spec/tree/2.0)
 to sign RESTful Web API requests and verify responses.
 
+Please note the 1.0 Spec is not supported.
+
 ## Development Prerequisites
 
 Before further development, please ensure the following tools are installed on your computer.
