@@ -37,3 +37,8 @@ npm -v
 * Run `npm install` to install all dependencies.
 * Make code changes in _src/_ directory.
 * In root directory, run ```gulp build-demo```. Alternatively, you can run ```gulp``` to keep gulp on watch to automatically compile/transpile all file changes.
+
+## Tests
+
+* Run `npm install` to install all dependencies.
+* In root directory, run ```gulp test``` to see the current test results. Alternatively, you can go to the _qunit/hmac.html_ page in your browser.
