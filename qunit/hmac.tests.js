@@ -98,14 +98,14 @@ QUnit.test('Test sign(), asserts constructor set config.', function(assert) {
     realm: 'my_realm',
     public_key: 'my_public_key',
     secret_key: 'my_secret_key',
-    version: '4.0',
+    version: '2.0',
     default_content_type: 'application/XML'
   });
   var secret_key_words = [-4999, -7, 503316480];
   assert.equal(HMAC_test_constructor.config.realm, 'my_realm', 'constructor() sets realm.');
   assert.equal(HMAC_test_constructor.config.public_key, 'my_public_key', 'constructor() sets public_key.');
   assert.deepEqual(HMAC_test_constructor.config.parsed_secret_key.words, secret_key_words, 'constructor() sets secret_key.');
-  assert.equal(HMAC_test_constructor.config.version, '4.0', 'constructor() sets version.');
+  assert.equal(HMAC_test_constructor.config.version, '2.0', 'constructor() sets version.');
   assert.equal(HMAC_test_constructor.config.default_content_type, 'application/XML', 'constructor() sets default_content_type.');
 });
 
