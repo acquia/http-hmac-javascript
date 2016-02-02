@@ -3,9 +3,6 @@
   "version": "0.1.0",
   "description": "HTTP HMAC JavaScript Library",
   "main": "gulpfile.js",
-  "directories": {
-    "example": "example"
-  },
   "dependencies": {
     "crypto-js": "^3.1.6"
   },
@@ -33,6 +30,7 @@
     "HTTP",
     "HMAC",
     "authentication",
+    "JavaScript",
     "Acquia"
   ],
   "author": "Acquia Lift Engineering",
