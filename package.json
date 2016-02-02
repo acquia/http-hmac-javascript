@@ -21,7 +21,6 @@
     "qunitjs": "^1.21.0"
   },
   "scripts": {
-    "install": "npm install",
     "test": "gulp test"
   },
   "repository": {
