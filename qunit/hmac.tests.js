@@ -125,6 +125,22 @@ QUnit.test('Test hasValidResponse(), asserts pass.', function(assert) {
   assert.ok(hasValidResponse, 'hasValidResponse() asserts pass.');
 });
 
+QUnit.test('Test hasValidResponse(), asserts fail by wrong nonce.', function(assert) {
+  expect(1);
+
+  request.open('POST', 'my_path');
+  request.setRequestHeader('Content-Type', 'text/plain');
+  request.acquiaHttpHmac = {};
+  request.acquiaHttpHmac.nonce = 'wrong-nonce';
+  request.acquiaHttpHmac.timestamp = 1000000000;
+  request.setResponseHeader('X-Server-Authorization-HMAC-SHA256', 'CU0ma6cbZ6wZAsjjKli8ukH8Nxx6kShpTQqxvw08Yns=');
+  request.send('correct request text');
+  request.receive(200, 'correct response text');
+
+  var hasValidResponse = HMAC.hasValidResponse(request);
+  assert.notOk(hasValidResponse, 'hasValidResponse() asserts fail by wrong nonce.');
+});
+
 QUnit.test('Test hasValidResponse(), asserts fail by wrong timestamp.', function(assert) {
   expect(1);
 
