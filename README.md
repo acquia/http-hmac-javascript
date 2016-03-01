@@ -24,7 +24,7 @@ npm -v
 ```
 
 ## Files
-* _demo/_ - Visit _get.hmtl_ and _post.html_ to see the demo in action.
+* _demo/_ - Visit _get.html_ and _post.html_ to see the demo in action.
 * _lib/_ - Library files.
   * _es5/_ - Traspiled ES5 version.
   * _es6/_ - ES6 version.
