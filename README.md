@@ -2,7 +2,7 @@
 
 ![ES5](https://camo.githubusercontent.com/d341caa63123c99b79fda7f8efdc29b35f9f2e70/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f65732d352d627269676874677265656e2e737667)
 ![ES6](https://camo.githubusercontent.com/d25414161ebfbbdd0f69a4a3e6a188a76ae2e82a/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f65732d362d627269676874677265656e2e737667)
-[![Build Status](https://travis-ci.com/acquia/http-hmac-javascript.svg?token=vEuJMmLgbhJzSGkAHj9Y&branch=master)](https://travis-ci.com/acquia/http-hmac-javascript)
+[![Build Status](https://travis-ci.org/acquia/http-hmac-javascript.svg?branch=master)](https://travis-ci.org/acquia/http-hmac-javascript)
 
 HMAC Request Signer is a JavaScript library that implements the version 2.0 of the [HTTP HMAC Spec](https://github.com/acquia/http-hmac-spec/tree/2.0)
 to sign RESTful Web API requests and verify responses.
