@@ -27,17 +27,15 @@ const HMAC = new AcquiaHttpHmac(hmac_config);
 let request = new XMLHttpRequest();
 // Define the state change action.
 request.onreadystatechange = () => {
-  if (request.readyState == 4) {
+  if (request.readyState === 4) {
     // Check if the response status is 200 ok.
     if (request.status !== 200) {
       throw new Error('Problem retrieving data.', request);
-      return;
     }
 
     // Validate the request's response.
     if (!HMAC.hasValidResponse(request)) {
       throw new Error('The request does not have a valid response.', request);
-      return;
     }
 
     // Finally, carry out the intended change.

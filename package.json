@@ -1,8 +1,8 @@
 {
   "name": "http-hmac-javascript",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "HTTP HMAC JavaScript Library",
-  "main": "gulpfile.js",
+  "main": "./lib/es5/hmac.js",
   "dependencies": {
     "crypto-js": "^3.1.6"
   },
