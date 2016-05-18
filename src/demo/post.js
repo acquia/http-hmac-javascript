@@ -54,7 +54,7 @@ HMAC.sign(sign_parameters);
 request.setRequestHeader('Content-Type', content_type);
 request.setRequestHeader('Special-Header-1', 'special_header_1_value');
 request.setRequestHeader('Special-Header-2', 'special_header_2_value');
-request.setRequestHeader('Unsigned-Header-3', 'unsigned_header_1_value');
+request.setRequestHeader('Unsigned-Header-1', 'unsigned_header_1_value');
 
 // Send the request.
 request.send(body);
