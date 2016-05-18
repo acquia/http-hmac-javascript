@@ -41,17 +41,19 @@ request.onreadystatechange = () => {
     document.getElementById('text-display').innerHTML = request.response;
   }
 };
-request.open(method, path, true);
-request.setRequestHeader('Content-Type', content_type);
 
-// The first two headers are the signed headers.
-request.setRequestHeader('Special-Header-1', 'special_header_1_value');
-request.setRequestHeader('Special-Header-2', 'special_header_2_value');
-request.setRequestHeader('Special-Header-3', 'special_header_3_value');
+// It is optional to open the request before signing.
+// request.open(method, path, true);
 
 // Sign the request using AcquiaHttpHmac.sign().
 let sign_parameters = {request, method, path, signed_headers, content_type};
 HMAC.sign(sign_parameters);
+
+// Set Content-Type header and other headers. This can happen before or after signing.
+request.setRequestHeader('Content-Type', content_type);
+request.setRequestHeader('Special-Header-1', 'special_header_1_value');
+request.setRequestHeader('Special-Header-2', 'special_header_2_value');
+request.setRequestHeader('Unsigned-Header-3', 'unsigned_header_1_value');
 
 // Send the request.
 request.send();

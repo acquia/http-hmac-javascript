@@ -25,7 +25,39 @@ QUnit.module('HTTP HMAC JavaScript Library tests', {
   }
 });
 
-QUnit.test('Test sign(), asserts GET (bodyless) pass.', function(assert) {
+QUnit.test('Test sign(), asserts GET pass.', function(assert) {
+  expect(5);
+
+  var method = 'GET',
+      path = 'http://fakesite.com:8888',
+      signed_headers = {},
+      content_type = 'text/plain',
+      responseText = 'correct response text';
+
+  request.open(method, path);
+  request.setRequestHeader('Content-Type', content_type);
+
+  var sign_parameters = {
+    request: request,
+    method: method,
+    path: path,
+    signed_headers: signed_headers,
+    content_type: content_type
+  };
+  HMAC.sign(sign_parameters);
+
+  request.send();
+  request.receive(200, responseText);
+
+  var authorization = 'acquia-http-hmac id="ABCD-1234",nonce="11bdbac4-1111-4111-9111-111111111111",realm="dice",version="2.0",signature="8kr0UO7sRpoPIdl9UIa7OMlbvned5AcXzjFg2K8yuE8="';
+  assert.equal(request.acquiaHttpHmac.nonce, '11bdbac4-1111-4111-9111-111111111111', 'sign() records a nonce to the XHR object.');
+  assert.equal(request.acquiaHttpHmac.timestamp, 1000000, 'sign() records a timestamp to the XHR object.');
+  assert.equal(request.getRequestHeader('X-Authorization-Timestamp'), 1000000, 'sign() sets "X-Authorization-Timestamp" request header to the XHR object.');
+  assert.equal(request.getRequestHeader('Authorization'), authorization, 'sign() sets "Authorization" request header to the XHR object.');
+  assert.equal(request.getRequestHeader('X-Authorization-Content-SHA256'), undefined, 'sign() sets "X-Authorization-Content-SHA256" request header to the XHR object.');
+});
+
+QUnit.test('Test sign(), asserts GET pass with body and without request.open().', function(assert) {
   expect(5);
 
   var method = 'GET',
@@ -35,10 +67,8 @@ QUnit.test('Test sign(), asserts GET (bodyless) pass.', function(assert) {
       body = 'correct request text',
       responseText = 'correct response text';
 
-  request.open(method, path);
-  request.setRequestHeader('Content-Type', content_type);
-  request.send(body);  // GET requests silently drops the body.
-  request.receive(200, responseText);
+  // No request.open here because we let the signer to open request.
+  // request.open(method, path);
 
   // GET requests silently drops the body, here we are testing if the sign() respects that behavior by passing in the body anyway.
   var sign_parameters = {
@@ -51,6 +81,10 @@ QUnit.test('Test sign(), asserts GET (bodyless) pass.', function(assert) {
   };
   HMAC.sign(sign_parameters);
 
+  request.setRequestHeader('Content-Type', content_type); // setRequestHeader happens after the signer opens the request.
+  request.send(body);  // GET requests silently drops the body.
+  request.receive(200, responseText);
+
   var authorization = 'acquia-http-hmac id="ABCD-1234",nonce="11bdbac4-1111-4111-9111-111111111111",realm="dice",version="2.0",signature="8kr0UO7sRpoPIdl9UIa7OMlbvned5AcXzjFg2K8yuE8="';
   assert.equal(request.acquiaHttpHmac.nonce, '11bdbac4-1111-4111-9111-111111111111', 'sign() records a nonce to the XHR object.');
   assert.equal(request.acquiaHttpHmac.timestamp, 1000000, 'sign() records a timestamp to the XHR object.');
@@ -59,7 +93,7 @@ QUnit.test('Test sign(), asserts GET (bodyless) pass.', function(assert) {
   assert.equal(request.getRequestHeader('X-Authorization-Content-SHA256'), undefined, 'sign() sets "X-Authorization-Content-SHA256" request header to the XHR object.');
 });
 
-QUnit.test('Test sign(), asserts POST (with body) pass.', function(assert) {
+QUnit.test('Test sign(), asserts POST pass.', function(assert) {
   expect(5);
 
   var method = 'POST',
@@ -71,8 +105,6 @@ QUnit.test('Test sign(), asserts POST (with body) pass.', function(assert) {
 
   request.open(method, path);
   request.setRequestHeader('Content-Type', content_type);
-  request.send(body);
-  request.receive(200, responseText);
 
   var sign_parameters = {
     request: request,
@@ -83,6 +115,9 @@ QUnit.test('Test sign(), asserts POST (with body) pass.', function(assert) {
     body: body
   };
   HMAC.sign(sign_parameters);
+
+  request.send(body);
+  request.receive(200, responseText);
 
   var authorization = 'acquia-http-hmac id="ABCD-1234",nonce="11bdbac4-1111-4111-9111-111111111111",realm="dice",version="2.0",signature="+2Oh3416Mr5HVda3LFA3lq7wYM4BNMMlDgyXv4k386o="';
   assert.equal(request.acquiaHttpHmac.nonce, '11bdbac4-1111-4111-9111-111111111111', 'sign() records a nonce to the XHR object.');
