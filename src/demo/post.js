@@ -30,12 +30,12 @@ request.onreadystatechange = () => {
   if (request.readyState === 4) {
     // Check if the response status is 200 ok.
     if (request.status !== 200) {
-      throw new Error('Problem retrieving data.', request);
+      throw new Error('Problem retrieving data.');
     }
 
     // Validate the request's response.
     if (!HMAC.hasValidResponse(request)) {
-      throw new Error('The request does not have a valid response.', request);
+      throw new Error('The request does not have a valid response.');
     }
 
     // Finally, carry out the intended change.
