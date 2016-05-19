@@ -53,6 +53,14 @@ gulp.task('build-demo', ['clean-demo', 'build-lib'], () => {
     .pipe(uglify())
     .pipe(concat('post.app.js'))
     .pipe(gulp.dest('./demo'));
+  gulp.src(['./src/demo/ajax.js'])
+    .pipe(babel({
+      presets: ['es2015']
+    }))
+    .pipe(addsrc.prepend(['./lib/es5/hmac.js', './node_modules/crypto-js/core.js', './node_modules/crypto-js/hmac.js', './node_modules/crypto-js/sha256.js', './node_modules/crypto-js/hmac-sha256.js', './node_modules/crypto-js/enc-base64.js', './node_modules/jquery/dist/jquery.js']))
+    .pipe(uglify())
+    .pipe(concat('ajax.app.js'))
+    .pipe(gulp.dest('./demo'));
 });
 
 gulp.task('default', ['build-demo'], () => {
