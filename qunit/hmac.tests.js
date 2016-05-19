@@ -104,11 +104,11 @@ QUnit.test('Test sign(), asserts GET pass with a promise-based request object.',
   // Create a fake promise-based request object.
   request = {};
   request.headers = {};
-  request.setRequestHeader = (name, value) => {
+  request.setRequestHeader = function(name, value) {
     request.headers[name] = value;
   };
-  request.getResponseHeader = () => {};
-  request.promise = () => {};
+  request.getResponseHeader = function() {};
+  request.promise = function() {};
 
   var method = 'GET',
       path = 'http://fakesite.com:8888',
