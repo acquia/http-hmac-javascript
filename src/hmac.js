@@ -6,8 +6,8 @@ if (!Date.now) {
 }
 
 /**
- * AcquiaHttpHmac - Let's you sign a XMLHttpRequest object by Acquia's HTTP HMAC Spec.
- * For more information, see: https://github.com/acquia/http-hmac-spec/tree/2.0
+ * AcquiaHttpHmac - Let's you sign a XMLHttpRequest or promised-based request object (e.g. jqXHR) by Acquia's
+ * HTTP HMAC Spec. For more information, see: https://github.com/acquia/http-hmac-spec/tree/2.0
  */
 class AcquiaHttpHmac {
   /**
@@ -52,10 +52,36 @@ class AcquiaHttpHmac {
   }
 
   /**
+   * Check if the request is a XMLHttpRequest.
+   *
+   * @param {(XMLHttpRequest|Object)} request
+   *   The request to be signed, which can be a XMLHttpRequest or a promise-based request Object (e.g. jqXHR).
+   * @returns {boolean}
+   *   TRUE if the request is a XMLHttpRequest; FALSE otherwise.
+   */
+  isXMLHttpRequest(request) {
+    return request instanceof XMLHttpRequest;
+  }
+
+  /**
+   * Check if the request is a promise-based request Object (e.g. jqXHR).
+   *
+   * @param {(XMLHttpRequest|Object)} request
+   *   The request to be signed, which can be a XMLHttpRequest or a promise-based request Object (e.g. jqXHR).
+   * @returns {boolean}
+   *   TRUE if the request is a promise-based request Object (e.g. jqXHR); FALSE otherwise.
+   */
+  isPromiseRequest(request) {
+    return request.hasOwnProperty('setRequestHeader') &&
+      request.hasOwnProperty('getResponseHeader') &&
+      request.hasOwnProperty('promise');
+  }
+
+  /**
    * Sign the request using provided parameters.
    *
-   * @param {XMLHttpRequest} request
-   *   The request to be signed.
+   * @param {(XMLHttpRequest|Object)} request
+   *   The request to be signed, which can be a XMLHttpRequest or a promise-based request Object (e.g. jqXHR).
    * @param {string} method
    *   Must be defined in the supported_methods.
    * @param {string} path
@@ -70,8 +96,8 @@ class AcquiaHttpHmac {
    */
   sign({request, method, path, signed_headers = {}, content_type = this.config.default_content_type, body = ''}) {
     // Validate input. First 3 parameters are mandatory.
-    if (!(request instanceof XMLHttpRequest) && !(typeof MockHttpRequest !== 'undefined' && request instanceof MockHttpRequest)) {
-      throw new Error('The request must be a XMLHttpRequest.');
+    if (!this.isXMLHttpRequest(request) && !this.isPromiseRequest(request)) {
+      throw new Error('The request must be a XMLHttpRequest or promise-based request Object (e.g. jqXHR).');
     }
     if (this.SUPPORTED_METHODS.indexOf(method) < 0) {
       throw new Error(`The method must be "${this.SUPPORTED_METHODS.join('" or "')}". "${method}" is not supported.`);
@@ -158,7 +184,7 @@ class AcquiaHttpHmac {
         signature = CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64),
         authorization = `acquia-http-hmac ${authorization_string},signature="${signature}"${authorization_signed_header_postfix}`;
 
-    if (request.readyState === 0) {
+    if (this.isXMLHttpRequest(request) && request.readyState === 0) {
       request.open(method, path, true);
     }
 
@@ -182,7 +208,7 @@ class AcquiaHttpHmac {
   /**
    * Check if the request has a valid response.
    *
-   * @param {XMLHttpRequest} request
+   * @param {XMLHttpRequest|Object} request
    *   The request to be validated.
    * @returns {boolean}
    *   TRUE if the request is valid; FALSE otherwise.

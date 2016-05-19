@@ -8,6 +8,11 @@ var request, HMAC = new AcquiaHttpHmac({
   secret_key: 'd175024aa4c4d8b312a7114687790c772dd94fb725cb68016aaeae5a76d68102'
 });
 
+// For testing only, alter the isXMLHttpRequest function to accept MockHttpRequest.
+HMAC.isXMLHttpRequest = function (request) {
+   return typeof MockHttpRequest !== 'undefined' && request instanceof MockHttpRequest;
+};
+
 // Freeze the Date.now() and Math.random() functions for testing.
 Date.now = function () {
    return 1000000000;
