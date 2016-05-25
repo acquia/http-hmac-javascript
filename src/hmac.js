@@ -178,7 +178,7 @@ class AcquiaHttpHmac {
     let site_port = parser.port ? `:${parser.port}` : '',
         site_name_and_port = `${parser.hostname}${site_port}`,
         url_query_string = parser.search.substring(1),
-        signature_base_string = `${method}\n${site_name_and_port}\n${parser.pathname}\n${url_query_string}\n${parametersToString(authorization_parameters)}\n${x_authorization_timestamp}${signature_base_string_content_suffix}`,
+        signature_base_string = `${method}\n${site_name_and_port}\n${parser.pathname}\n${url_query_string}\n${parametersToString(authorization_parameters)}\n${parametersToString(signed_headers, ':', '', ',').toLowerCase()}\n${x_authorization_timestamp}${signature_base_string_content_suffix}`,
         authorization_string = parametersToString(authorization_parameters, '="', '"', ','),
         authorization_signed_header_postfix = Object.keys(signed_headers).length === 0 ? '' : `,headers="${Object.keys(signed_headers).join()}"`,
         signature = CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64),
