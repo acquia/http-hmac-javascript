@@ -216,15 +216,17 @@ class AcquiaHttpHmac {
      *   When join(), use this string as the glue.
      * @returns {string}
      */
-    let parametersToString = (parameters, value_prefix = '=', value_suffix = '', glue = '&') => {
+    let parametersToString = (parameters, value_prefix = '=', value_suffix = '', glue = '&', encode = true) => {
       let parameter_keys = Object.keys(parameters).sort(),
-          parameters_array = [];
+          parameters_array = [],
+          value;
 
       parameter_keys.forEach((parameter_key) => {
         if (!parameters.hasOwnProperty(parameter_key)) {
           return;
         }
-        parameters_array.push(`${parameter_key.toLocaleLowerCase()}${value_prefix}${encodeURI(parameters[parameter_key])}${value_suffix}`);
+        value = encode ? encodeURI(parameters[parameter_key]) : parameters[parameter_key];
+        parameters_array.push(`${parameter_key.toLocaleLowerCase()}${value_prefix}${value}${value_suffix}`);
       });
       return parameters_array.join(glue);
     };
@@ -277,7 +279,9 @@ class AcquiaHttpHmac {
     let site_port = parser.port ? `:${parser.port}` : '',
         site_name_and_port = `${parser.hostname}${site_port}`,
         url_query_string = parser.search.substring(1),
-        signature_base_string = `${method}\n${site_name_and_port}\n${parser.pathname}\n${url_query_string}\n${parametersToString(authorization_parameters)}\n${x_authorization_timestamp}${signature_base_string_content_suffix}`,
+        signed_headers_raw_string = parametersToString(signed_headers, ':', '', '\n', false),
+        signed_headers_string = signed_headers_raw_string === '' ? '' : `${signed_headers_raw_string}\n`,
+        signature_base_string = `${method}\n${site_name_and_port}\n${parser.pathname}\n${url_query_string}\n${parametersToString(authorization_parameters)}\n${signed_headers_string}${x_authorization_timestamp}${signature_base_string_content_suffix}`,
         authorization_string = parametersToString(authorization_parameters, '="', '"', ','),
         authorization_signed_headers_string = Object.keys(signed_headers).length === 0 ? '' : `,headers="${encodeURI(Object.keys(signed_headers).sort().join(';').toLowerCase())}"`,
         signature = encodeURI(CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64)),
