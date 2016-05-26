@@ -182,7 +182,7 @@ class AcquiaHttpHmac {
    * @param {string} method
    *   Must be defined in the supported_methods.
    * @param {string} path
-   *   End point's full URL path.
+   *   End point's full URL path, including schema, port, query string, etc. It should already be URL encoded.
    * @param {object} signed_headers
    *   Signed headers.
    * @param {string} content_type
@@ -217,18 +217,31 @@ class AcquiaHttpHmac {
      * @returns {string}
      */
     let parametersToString = (parameters, value_prefix = '=', value_suffix = '', glue = '&', encode = true) => {
-      let parameter_keys = Object.keys(parameters).sort(),
-          parameters_array = [],
-          value;
+      let parameter_keys = Object.keys(parameters),
+          processed_parameter_keys = [],
+          processed_parameters = {},
+          result_string_array = [];
 
+      // Process the headers.
+      // 1) Process the parameter keys into lowercase, and
+      // 2) Process values to URI encoded if applicable.
       parameter_keys.forEach((parameter_key) => {
         if (!parameters.hasOwnProperty(parameter_key)) {
           return;
         }
-        value = encode ? encodeURI(parameters[parameter_key]) : parameters[parameter_key];
-        parameters_array.push(`${parameter_key.toLocaleLowerCase()}${value_prefix}${value}${value_suffix}`);
+        let processed_parameter_key = parameter_key.toLowerCase();
+        processed_parameter_keys.push(processed_parameter_key);
+        processed_parameters[processed_parameter_key] = encode ? encodeURI(parameters[parameter_key]) : parameters[parameter_key];
       });
-      return parameters_array.join(glue);
+
+      // Process into result string.
+      processed_parameter_keys.sort().forEach((processed_parameter_key) => {
+        if (!processed_parameters.hasOwnProperty(processed_parameter_key)) {
+          return;
+        }
+        result_string_array.push(`${processed_parameter_key}${value_prefix}${processed_parameters[processed_parameter_key]}${value_suffix}`);
+      });
+      return result_string_array.join(glue);
     };
 
     /**
@@ -279,11 +292,11 @@ class AcquiaHttpHmac {
     let site_port = parser.port ? `:${parser.port}` : '',
         site_name_and_port = `${parser.hostname}${site_port}`,
         url_query_string = parser.search.substring(1),
-        signed_headers_raw_string = parametersToString(signed_headers, ':', '', '\n', false),
-        signed_headers_string = signed_headers_raw_string === '' ? '' : `${signed_headers_raw_string}\n`,
-        signature_base_string = `${method}\n${site_name_and_port}\n${parser.pathname}\n${url_query_string}\n${parametersToString(authorization_parameters)}\n${signed_headers_string}${x_authorization_timestamp}${signature_base_string_content_suffix}`,
+        signed_headers_string = parametersToString(signed_headers, ':', '', '\n', false),
+        signature_base_signed_headers_string = signed_headers_string === '' ? '' : `${signed_headers_string}\n`,
+        signature_base_string = `${method}\n${site_name_and_port}\n${parser.pathname}\n${url_query_string}\n${parametersToString(authorization_parameters)}\n${signature_base_signed_headers_string}${x_authorization_timestamp}${signature_base_string_content_suffix}`,
         authorization_string = parametersToString(authorization_parameters, '="', '"', ','),
-        authorization_signed_headers_string = Object.keys(signed_headers).length === 0 ? '' : `,headers="${encodeURI(Object.keys(signed_headers).sort().join(';').toLowerCase())}"`,
+        authorization_signed_headers_string = Object.keys(signed_headers).length === 0 ? '' : `,headers="${encodeURI(Object.keys(signed_headers).join('|||||').toLowerCase().split('|||||').sort().join(';'))}"`,
         signature = encodeURI(CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64)),
         authorization = `acquia-http-hmac ${authorization_string}${authorization_signed_headers_string},signature="${signature}"`;
 
