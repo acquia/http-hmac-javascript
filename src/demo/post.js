@@ -9,8 +9,8 @@ let method = 'POST', // Can also be other methods here such as 'PUT'.
     // Example path: http://localhost:9000/http-hmac-javascript/demo/post.php?myQueryParameter=90210#myAnchor
     path = `${location.protocol}//${location.hostname}${port}${pathname}?myQueryParameter=90210#myAnchor`,
     signed_headers = {
-      'special-header-1': 'special_header_1_value',
-      'special-header-2': 'special_header_2_value'
+      'Special-Header-1': 'special_header_1_value',
+      'Special-Header-2': 'special_header_2_value'
     },
     content_type = 'application/x-www-form-urlencoded',
     body = 'first_word=Hello&second_word=World';
