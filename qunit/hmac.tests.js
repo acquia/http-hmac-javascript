@@ -54,7 +54,7 @@ QUnit.test('Test sign(), asserts GET pass.', function(assert) {
   request.send();
   request.receive(200, responseText);
 
-  var authorization = 'acquia-http-hmac id="ABCD-1234",nonce="11bdbac4-1111-4111-9111-111111111111",realm="dice%5E",version="2.0",signature="aeOVMGoyBcWZPyyzdjrzFkGAF8gAGaeqbfA324L5q8Y="';
+  var authorization = 'acquia-http-hmac id="ABCD-1234",nonce="11bdbac4-1111-4111-9111-111111111111",realm="dice%5E",version="2.0",headers="",signature="aeOVMGoyBcWZPyyzdjrzFkGAF8gAGaeqbfA324L5q8Y="';
   assert.equal(request.acquiaHttpHmac.nonce, '11bdbac4-1111-4111-9111-111111111111', 'sign() records a nonce to the XHR object.');
   assert.equal(request.acquiaHttpHmac.timestamp, 1000000, 'sign() records a timestamp to the XHR object.');
   assert.equal(request.getRequestHeader('X-Authorization-Timestamp'), 1000000, 'sign() sets "X-Authorization-Timestamp" request header to the XHR object.');
@@ -128,7 +128,7 @@ QUnit.test('Test sign(), asserts GET pass with a promise-based request object.',
   };
   HMAC.sign(sign_parameters);
 
-  var authorization = 'acquia-http-hmac id="ABCD-1234",nonce="11bdbac4-1111-4111-9111-111111111111",realm="dice%5E",version="2.0",signature="aeOVMGoyBcWZPyyzdjrzFkGAF8gAGaeqbfA324L5q8Y="';
+  var authorization = 'acquia-http-hmac id="ABCD-1234",nonce="11bdbac4-1111-4111-9111-111111111111",realm="dice%5E",version="2.0",headers="",signature="aeOVMGoyBcWZPyyzdjrzFkGAF8gAGaeqbfA324L5q8Y="';
   assert.equal(request.acquiaHttpHmac.nonce, '11bdbac4-1111-4111-9111-111111111111', 'sign() records a nonce to the jqXHR object.');
   assert.equal(request.acquiaHttpHmac.timestamp, 1000000, 'sign() records a timestamp to the jqXHR object.');
   assert.deepEqual(request.headers, { Authorization: authorization, 'X-Authorization-Timestamp': '1000000' }, 'sign() sets "X-Authorization-Timestamp" and "Authorization" request header to the jqXHR object.');
@@ -160,7 +160,7 @@ QUnit.test('Test sign(), asserts POST pass.', function(assert) {
   request.send(body);
   request.receive(200, responseText);
 
-  var authorization = 'acquia-http-hmac id="ABCD-1234",nonce="11bdbac4-1111-4111-9111-111111111111",realm="dice%5E",version="2.0",signature="pNUQl+h18e+F6Lzd2lDGe53uaWCDbqQ5eqGnxrC433M="';
+  var authorization = 'acquia-http-hmac id="ABCD-1234",nonce="11bdbac4-1111-4111-9111-111111111111",realm="dice%5E",version="2.0",headers="",signature="pNUQl+h18e+F6Lzd2lDGe53uaWCDbqQ5eqGnxrC433M="';
   assert.equal(request.acquiaHttpHmac.nonce, '11bdbac4-1111-4111-9111-111111111111', 'sign() records a nonce to the XHR object.');
   assert.equal(request.acquiaHttpHmac.timestamp, 1000000, 'sign() records a timestamp to the XHR object.');
   assert.equal(request.getRequestHeader('X-Authorization-Timestamp'), 1000000, 'sign() sets "X-Authorization-Timestamp" request header to the XHR object.');
