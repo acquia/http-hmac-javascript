@@ -280,8 +280,8 @@ class AcquiaHttpHmac {
         signature_base_string = `${method}\n${site_name_and_port}\n${parser.pathname}\n${url_query_string}\n${parametersToString(authorization_parameters)}\n${x_authorization_timestamp}${signature_base_string_content_suffix}`,
         authorization_string = parametersToString(authorization_parameters, '="', '"', ','),
         authorization_signed_headers_string = Object.keys(signed_headers).length === 0 ? '' : `,headers="${encodeURI(Object.keys(signed_headers).sort().join(';').toLowerCase())}"`,
-        signature = CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64),
-        authorization = `acquia-http-hmac ${authorization_string}${authorization_signed_headers_string},signature="${encodeURI(signature)}"`;
+        signature = encodeURI(CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64)),
+        authorization = `acquia-http-hmac ${authorization_string}${authorization_signed_headers_string},signature="${signature}"`;
 
     if (this.isXMLHttpRequest(request) && request.readyState === 0) {
       request.open(method, path, true);
