@@ -26,7 +26,7 @@ npm -v
 ## Files
 * _demo/_ - Visit _get.html_ and _post.html_ to see the demo in action.
 * _lib/_ - Library files.
-  * _es5/_ - Traspiled ES5 version.
+  * _es5/_ - Transpiled ES5 version, polyfilled to IE 5.5.
   * _es6/_ - ES6 version.
 * _src/_ - Source files. Code changes should be made here.
   * _demo/_ - Demo files to show how the library can be used.

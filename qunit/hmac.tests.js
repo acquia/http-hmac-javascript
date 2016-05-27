@@ -9,7 +9,7 @@ var request, HMAC = new AcquiaHttpHmac({
 });
 
 // For testing only, alter the isXMLHttpRequest function to accept MockHttpRequest.
-HMAC.isXMLHttpRequest = function (request) {
+AcquiaHttpHmac.isXMLHttpRequest = function (request) {
    return typeof MockHttpRequest !== 'undefined' && request instanceof MockHttpRequest;
 };
 
