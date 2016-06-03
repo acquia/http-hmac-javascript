@@ -62,11 +62,11 @@ QUnit.test('Test sign(), asserts GET pass.', function(assert) {
   assert.equal(request.getRequestHeader('X-Authorization-Content-SHA256'), undefined, 'sign() sets "X-Authorization-Content-SHA256" request header to the XHR object.');
 });
 
-QUnit.test('Test sign(), asserts GET pass with full URL path, body, various signed headers, and without request.open().', function(assert) {
+QUnit.test('Test sign(), asserts GET pass with full encodable URL path, body, various signed headers, and without request.open().', function(assert) {
   expect(5);
 
   var method = 'GET',
-      path = 'http://fakesite.com:8888/fake-api?first_param=first_value&second_param=second_value',
+      path = 'http://fakesite.com:8888/fake-api?first_param=first value%25&second_param=second_valuè%',
       signed_headers = {
         'UPPERCASE-HEADER': 'UPPERCASE HEADER VALUE',
         'lowercase-header': 'lowercase header value',
@@ -83,7 +83,7 @@ QUnit.test('Test sign(), asserts GET pass with full URL path, body, various sign
   var sign_parameters = {
     request: request,
     method: method,
-    path: path,
+    path: encodeURI(path),
     signed_headers: signed_headers,
     content_type: content_type,
     body: body
@@ -94,7 +94,7 @@ QUnit.test('Test sign(), asserts GET pass with full URL path, body, various sign
   request.send(body);  // GET requests silently drops the body.
   request.receive(200, responseText);
 
-  var authorization = 'acquia-http-hmac id="ABCD-1234",nonce="11bdbac4-1111-4111-9111-111111111111",realm="dice%5E",version="2.0",headers="header%5Ewith%20special#char;lowercase-header;uppercase-header",signature="enTl9k7vcbOEn5wDDMSKrvVizafbR7n7a6XMqZCfPSA="';
+  var authorization = 'acquia-http-hmac id="ABCD-1234",nonce="11bdbac4-1111-4111-9111-111111111111",realm="dice%5E",version="2.0",headers="header%5Ewith%20special#char;lowercase-header;uppercase-header",signature="6/5Xyyqv/HLUWHMUk7ZZK/DI7aag4+EQafuN89UqHL0="';
   assert.equal(request.acquiaHttpHmac.nonce, '11bdbac4-1111-4111-9111-111111111111', 'sign() records a nonce to the XHR object.');
   assert.equal(request.acquiaHttpHmac.timestamp, 1000000, 'sign() records a timestamp to the XHR object.');
   assert.equal(request.getRequestHeader('X-Authorization-Timestamp'), 1000000, 'sign() sets "X-Authorization-Timestamp" request header to the XHR object.');
@@ -183,6 +183,62 @@ QUnit.test('Test sign(), asserts constructor set config.', function(assert) {
   assert.deepEqual(HMAC_test_constructor.config.parsed_secret_key.words, secret_key_words, 'constructor() sets secret_key.');
   assert.equal(HMAC_test_constructor.config.version, '2.0', 'constructor() sets version.');
   assert.equal(HMAC_test_constructor.config.default_content_type, 'application/XML', 'constructor() sets default_content_type.');
+});
+
+QUnit.test('Test sign(), assert throwing various errors.', function(assert) {
+  expect(5);
+
+  var method = 'GET',
+      path = 'http://fakesite.com:8888/fake-api?first_param=first value%25&second_param=second_valuè',
+      content_type = 'text/plain';
+
+  request.open(method, path);
+  request.setRequestHeader('Content-Type', content_type);
+
+  var sign_parameters = {};
+  assert.throws(
+    function() {
+      HMAC.sign(sign_parameters);
+    },
+    new Error('The request is required, and must be a XMLHttpRequest or promise-based request Object (e.g. jqXHR).'),
+    'Assert the "request" exists.'
+  );
+
+  sign_parameters.request = {};
+  assert.throws(
+    function() {
+      HMAC.sign(sign_parameters);
+    },
+    new Error('The request is required, and must be a XMLHttpRequest or promise-based request Object (e.g. jqXHR).'),
+    'Assert the "request" is a XMLHttpRequest or promise-based request Object.'
+  );
+
+  sign_parameters.request = request;
+  assert.throws(
+    function() {
+      HMAC.sign(sign_parameters);
+    },
+    new Error('The method must be "GET" or "POST" or "PUT" or "DELETE" or "HEAD" or "OPTIONS" or "CUSTOM". "undefined" is not supported.'),
+    'Assert the "method" exists.'
+  );
+
+  sign_parameters.method = method;
+  assert.throws(
+    function() {
+      HMAC.sign(sign_parameters);
+    },
+    new Error('The end point path must not be empty.'),
+    'Assert the "path" exists.'
+  );
+
+  sign_parameters.path = path;
+  assert.throws(
+    function() {
+      HMAC.sign(sign_parameters);
+    },
+    new Error('The URL must already be URI encoded.'),
+    'Assert the "path" is already encoded.'
+  );
 });
 
 QUnit.test('Test hasValidResponse(), asserts pass.', function(assert) {

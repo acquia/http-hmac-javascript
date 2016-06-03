@@ -245,7 +245,7 @@ class AcquiaHttpHmac {
    * @param {string} method
    *   Must be defined in the supported_methods.
    * @param {string} path
-   *   End point's full URL path, including schema, port, query string, etc. It should already be URL encoded.
+   *   End point's full URL path, including schema, port, query string, etc. It must already be URL encoded.
    * @param {object} signed_headers
    *   Signed headers.
    * @param {string} content_type
@@ -256,14 +256,17 @@ class AcquiaHttpHmac {
    */
   sign({request, method, path, signed_headers = {}, content_type = this.config.default_content_type, body = ''}) {
     // Validate input. First 3 parameters are mandatory.
-    if (!AcquiaHttpHmac.isXMLHttpRequest(request) && !AcquiaHttpHmac.isPromiseRequest(request)) {
-      throw new Error('The request must be a XMLHttpRequest or promise-based request Object (e.g. jqXHR).');
+    if (!request || !AcquiaHttpHmac.isXMLHttpRequest(request) && !AcquiaHttpHmac.isPromiseRequest(request)) {
+      throw new Error('The request is required, and must be a XMLHttpRequest or promise-based request Object (e.g. jqXHR).');
     }
     if (this.SUPPORTED_METHODS.indexOf(method) < 0) {
       throw new Error(`The method must be "${this.SUPPORTED_METHODS.join('" or "')}". "${method}" is not supported.`);
     }
     if (!path) {
       throw new Error('The end point path must not be empty.');
+    }
+    if (path !== encodeURI(decodeURI(path))) {
+      throw new Error('The URL must already be URI encoded.');
     }
 
     /**
