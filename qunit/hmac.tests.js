@@ -185,7 +185,49 @@ QUnit.test('Test sign(), asserts constructor set config.', function(assert) {
   assert.equal(HMAC_test_constructor.config.default_content_type, 'application/XML', 'constructor() sets default_content_type.');
 });
 
-QUnit.test('Test sign(), assert throwing various errors.', function(assert) {
+QUnit.test('Test sign(), asserts constructor set config throwing various Errors.', function(assert) {
+  expect(4);
+
+  var constructor_config = {};
+
+  assert.throws(
+    function() {
+      new AcquiaHttpHmac(constructor_config);
+    },
+    new Error('The "realm" must not be empty.'),
+    'Assert the "realm" exists.'
+  );
+  constructor_config.realm = 'my_realm';
+
+  assert.throws(
+    function() {
+      new AcquiaHttpHmac(constructor_config);
+    },
+    new Error('The "public_key" must not be empty.'),
+    'Assert the "public_key" exists.'
+  );
+  constructor_config.public_key = 'my_public_key';
+
+  assert.throws(
+    function() {
+      new AcquiaHttpHmac(constructor_config);
+    },
+    new Error('The "secret_key" must not be empty.'),
+    'Assert the "secret_key" exists.'
+  );
+  constructor_config.secret_key = 'secret_key';
+
+  constructor_config.version = '1.0';
+  assert.throws(
+    function() {
+      new AcquiaHttpHmac(constructor_config);
+    },
+    new Error('The version must be "2.0". Version "1.0" is not supported.'),
+    'Assert the "version" is supported.'
+  );
+});
+
+QUnit.test('Test sign(), assert throwing various Errors.', function(assert) {
   expect(5);
 
   var method = 'GET',
@@ -212,8 +254,8 @@ QUnit.test('Test sign(), assert throwing various errors.', function(assert) {
     new Error('The request is required, and must be a XMLHttpRequest or promise-based request Object (e.g. jqXHR).'),
     'Assert the "request" is a XMLHttpRequest or promise-based request Object.'
   );
-
   sign_parameters.request = request;
+
   assert.throws(
     function() {
       HMAC.sign(sign_parameters);
@@ -221,8 +263,8 @@ QUnit.test('Test sign(), assert throwing various errors.', function(assert) {
     new Error('The method must be "GET" or "POST" or "PUT" or "DELETE" or "HEAD" or "OPTIONS" or "CUSTOM". "undefined" is not supported.'),
     'Assert the "method" exists.'
   );
-
   sign_parameters.method = method;
+
   assert.throws(
     function() {
       HMAC.sign(sign_parameters);
@@ -230,8 +272,8 @@ QUnit.test('Test sign(), assert throwing various errors.', function(assert) {
     new Error('The end point path must not be empty.'),
     'Assert the "path" exists.'
   );
-
   sign_parameters.path = path;
+
   assert.throws(
     function() {
       HMAC.sign(sign_parameters);
