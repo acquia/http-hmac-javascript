@@ -220,7 +220,10 @@ class AcquiaHttpHmac {
    *   TRUE if the request is a XMLHttpRequest; FALSE otherwise.
    */
   static isXMLHttpRequest(request) {
-    return request instanceof XMLHttpRequest;
+    if (request instanceof XMLHttpRequest || request.onreadystatechange) {
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -236,6 +239,38 @@ class AcquiaHttpHmac {
       request.hasOwnProperty('getResponseHeader') &&
       request.hasOwnProperty('promise');
   }
+
+  /**
+   * Implementation of Steven Levithan uri parser
+   * @param  {String}   str The uri to parse
+   * @param  {Boolean}  strictMode strict mode flag
+   * @return {Object}   parsed representation of a uri
+   */
+  static parseUri (str, strictMode = false) {
+    let o = {
+      key: ["source","protocol","host","userInfo","user","password","hostname","port","relative","pathname","directory","file","search","hash"],
+      q: {
+        name:   "queryKey",
+        parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+      },
+      parser: {
+        strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+        loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+      }
+    },
+    m  = o.parser[strictMode ? "strict" : "loose"].exec(str),
+    uri = {},
+    i  = 14;
+
+    while (i--) uri[o.key[i]] = m[i] || "";
+
+    uri[o.q.name] = {};
+    uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+      if ($1) uri[o.q.name][$1] = $2;
+    });
+
+    return uri;
+  };
 
   /**
    * Sign the request using provided parameters.
@@ -341,7 +376,7 @@ class AcquiaHttpHmac {
 
     // Compute the authorization headers.
     let nonce = generateNonce(),
-        parser = document.createElement('a'),
+        parser = AcquiaHttpHmac.parseUri(path),
         authorization_parameters = {
           id: this.config.public_key,
           nonce: nonce,
@@ -352,14 +387,12 @@ class AcquiaHttpHmac {
         x_authorization_content_sha256 = willSendBody(body, method) ? CryptoJS.SHA256(body).toString(CryptoJS.enc.Base64) : '',
         signature_base_string_content_suffix = willSendBody(body, method) ? `\n${content_type}\n${x_authorization_content_sha256}` : '';
 
-    parser.href = path;
-
     let site_port = parser.port ? `:${parser.port}` : '',
         site_name_and_port = `${parser.hostname}${site_port}`,
-        url_query_string = parser.search.substring(1),
+        url_query_string = parser.search,
         signed_headers_string = parametersToString(signed_headers, ':', '', '\n', false),
         signature_base_signed_headers_string = signed_headers_string === '' ? '' : `${signed_headers_string}\n`,
-        signature_base_string = `${method}\n${site_name_and_port}\n${parser.pathname}\n${url_query_string}\n${parametersToString(authorization_parameters)}\n${signature_base_signed_headers_string}${x_authorization_timestamp}${signature_base_string_content_suffix}`,
+        signature_base_string = `${method}\n${site_name_and_port}\n${parser.pathname || '/'}\n${url_query_string}\n${parametersToString(authorization_parameters)}\n${signature_base_signed_headers_string}${x_authorization_timestamp}${signature_base_string_content_suffix}`,
         authorization_string = parametersToString(authorization_parameters, '="', '"', ','),
         authorization_signed_headers_string = encodeURI(Object.keys(signed_headers).join('|||||').toLowerCase().split('|||||').sort().join(';')),
         signature = encodeURI(CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64)),
@@ -410,6 +443,7 @@ class AcquiaHttpHmac {
 if (typeof exports === "object") {
   // CommonJS
   var CryptoJS = require('crypto-js');
+  var XMLHttpRequest = XMLHttpRequest || require("xmlhttprequest").XMLHttpRequest;
   module.exports = exports = AcquiaHttpHmac;
 }
 else if (typeof define === "function" && define.amd) {

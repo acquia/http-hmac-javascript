@@ -354,3 +354,15 @@ QUnit.test('Test hasValidResponse(), asserts fail by wrong server hash.', functi
   var hasValidResponse = HMAC.hasValidResponse(request);
   assert.notOk(hasValidResponse, 'hasValidResponse() asserts fail by wrong server hash.');
 });
+
+QUnit.test('Test parseUri(), asserts uri are parsed.', function(assert) {
+  expect(4);
+
+  var uri = 'http://fakesite.com:9000/slots?account_id=D8TEST&site_id=FRONTEND&&status=enabled&visible_on_page=http://fakesite.com/index.html'
+  var parsed = AcquiaHttpHmac.parseUri(uri);
+
+  assert.equal(parsed.port, '9000', 'parseUri() returns port correctly.');
+  assert.equal(parsed.hostname, 'fakesite.com', 'parseUri() returns hostname correctly.');
+  assert.equal(parsed.search, 'account_id=D8TEST&site_id=FRONTEND&&status=enabled&visible_on_page=http://fakesite.com/index.html', 'parseUri() returns search correctly.');
+  assert.equal(parsed.pathname, '/slots', 'parseUri() returns pathname correctly.');
+});
