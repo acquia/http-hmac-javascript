@@ -241,7 +241,8 @@ class AcquiaHttpHmac {
   }
 
   /**
-   * Implementation of Steven Levithan uri parser
+   * Implementation of Steven Levithan uri parser.
+   *
    * @param  {String}   str The uri to parse
    * @param  {Boolean}  strictMode strict mode flag
    * @return {Object}   parsed representation of a uri
