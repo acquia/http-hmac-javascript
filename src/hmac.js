@@ -1,305 +1,34 @@
 'use strict';
+var CryptoJS = require('crypto-js');
 
-// For IE5.5 to IE8 compatibility.
-if (!Date.now) {
-  Date.now = () => new Date().getTime();
-}
-if (!Object.keys) {
-  Object.keys = (function() {
-    'use strict';
-    var hasOwnProperty = Object.prototype.hasOwnProperty,
-        hasDontEnumBug = !({ toString: null }).propertyIsEnumerable('toString'),
-        dontEnums = [
-          'toString',
-          'toLocaleString',
-          'valueOf',
-          'hasOwnProperty',
-          'isPrototypeOf',
-          'propertyIsEnumerable',
-          'constructor'
-        ],
-        dontEnumsLength = dontEnums.length;
+exports.sign = function(req, public_key, secret_key) {
+    var version = '2.0';
+    var realm = req.realm;
+    var host = req.host; 
+    var method = req.method;
+    var path = req.path;
+    var signed_headers = req.signed_headers;
+    var content_type = req.content_type;
+    var body = req.body;
+    var port = req.port;
+    var query_string = req.query_string;
+    const SUPPORTED_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'CUSTOM'];
 
-    return function(obj) {
-      if (typeof obj !== 'object' && (typeof obj !== 'function' || obj === null)) {
-        throw new TypeError('Object.keys called on non-object');
-      }
-
-      var result = [], prop, i;
-
-      for (prop in obj) {
-        if (hasOwnProperty.call(obj, prop)) {
-          result.push(prop);
-        }
-      }
-
-      if (hasDontEnumBug) {
-        for (i = 0; i < dontEnumsLength; i++) {
-          if (hasOwnProperty.call(obj, dontEnums[i])) {
-            result.push(dontEnums[i]);
-          }
-        }
-      }
-      return result;
-    };
-  }());
-}
-if (!Array.prototype.forEach) {
-  Array.prototype.forEach = function(callback, thisArg) {
-    var T, k;
-
-    if (this == null) {
-      throw new TypeError(' this is null or not defined');
-    }
-
-    // 1. Let O be the result of calling toObject() passing the
-    // |this| value as the argument.
-    var O = Object(this);
-
-    // 2. Let lenValue be the result of calling the Get() internal
-    // method of O with the argument "length".
-    // 3. Let len be toUint32(lenValue).
-    var len = O.length >>> 0;
-
-    // 4. If isCallable(callback) is false, throw a TypeError exception.
-    // See: http://es5.github.com/#x9.11
-    if (typeof callback !== "function") {
-      throw new TypeError(callback + ' is not a function');
-    }
-
-    // 5. If thisArg was supplied, let T be thisArg; else let
-    // T be undefined.
-    if (arguments.length > 1) {
-      T = thisArg;
-    }
-
-    // 6. Let k be 0
-    k = 0;
-
-    // 7. Repeat, while k < len
-    while (k < len) {
-      var kValue;
-
-      // a. Let Pk be ToString(k).
-      //    This is implicit for LHS operands of the in operator
-      // b. Let kPresent be the result of calling the HasProperty
-      //    internal method of O with argument Pk.
-      //    This step can be combined with c
-      // c. If kPresent is true, then
-      if (k in O) {
-        // i. Let kValue be the result of calling the Get internal
-        // method of O with argument Pk.
-        kValue = O[k];
-
-        // ii. Call the Call internal method of callback with T as
-        // the this value and argument list containing kValue, k, and O.
-        callback.call(T, kValue, k, O);
-      }
-      // d. Increase k by 1.
-      k++;
-    }
-    // 8. return undefined
-  };
-}
-if (!Array.prototype.indexOf) {
-  Array.prototype.indexOf = function(searchElement, fromIndex) {
-
-    var k;
-
-    // 1. Let o be the result of calling ToObject passing
-    //    the this value as the argument.
-    if (this == null) {
-      throw new TypeError('"this" is null or not defined');
-    }
-
-    var o = Object(this);
-
-    // 2. Let lenValue be the result of calling the Get
-    //    internal method of o with the argument "length".
-    // 3. Let len be ToUint32(lenValue).
-    var len = o.length >>> 0;
-
-    // 4. If len is 0, return -1.
-    if (len === 0) {
-      return -1;
-    }
-
-    // 5. If argument fromIndex was passed let n be
-    //    ToInteger(fromIndex); else let n be 0.
-    var n = +fromIndex || 0;
-
-    if (Math.abs(n) === Infinity) {
-      n = 0;
-    }
-
-    // 6. If n >= len, return -1.
-    if (n >= len) {
-      return -1;
-    }
-
-    // 7. If n >= 0, then Let k be n.
-    // 8. Else, n<0, Let k be len - abs(n).
-    //    If k is less than 0, then let k be 0.
-    k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
-
-    // 9. Repeat, while k < len
-    while (k < len) {
-      // a. Let Pk be ToString(k).
-      //   This is implicit for LHS operands of the in operator
-      // b. Let kPresent be the result of calling the
-      //    HasProperty internal method of o with argument Pk.
-      //   This step can be combined with c
-      // c. If kPresent is true, then
-      //    i.  Let elementK be the result of calling the Get
-      //        internal method of o with the argument ToString(k).
-      //   ii.  Let same be the result of applying the
-      //        Strict Equality Comparison Algorithm to
-      //        searchElement and elementK.
-      //  iii.  If same is true, return k.
-      if (k in o && o[k] === searchElement) {
-        return k;
-      }
-      k++;
-    }
-    return -1;
-  };
-}
-
-/**
- * AcquiaHttpHmac - Let's you sign a XMLHttpRequest or promised-based request object (e.g. jqXHR) by Acquia's
- * HTTP HMAC Spec. For more information, see: https://github.com/acquia/http-hmac-spec/tree/2.0
- */
-class AcquiaHttpHmac {
-  /**
-   * Constructor.
-   *
-   * @constructor
-   * @param {string} realm
-   *   The provider.
-   * @param {string} public_key
-   *   Public key.
-   * @param {string} secret_key
-   *   Secret key.
-   * @param {string} version
-   *   Authenticator version.
-   * @param {string} default_content_type
-   *   Default content type of all signings (other than specified during signing).
-   */
-  constructor({realm, public_key, secret_key, version = '2.0', default_content_type = 'application/json'}) {
-    if (!realm) {
-      throw new Error('The "realm" must not be empty.');
-    }
-    if (!public_key) {
-      throw new Error('The "public_key" must not be empty.');
-    }
-    if (!secret_key) {
-      throw new Error('The "secret_key" must not be empty.');
-    }
-    let supported_versions = ['2.0'];
-    if (supported_versions.indexOf(version) < 0) {
-      throw new Error(`The version must be "${supported_versions.join('" or "')}". Version "${version}" is not supported.`);
-    }
-
-    let parsed_secret_key = CryptoJS.enc.Base64.parse(secret_key);
-    this.config = {realm, public_key, parsed_secret_key, version, default_content_type};
-
-    /**
-     * Supported methods. Other HTTP methods through XMLHttpRequest are not supported by modern browsers due to insecurity.
-     *
-     * @type array
-     */
-    this.SUPPORTED_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'CUSTOM'];
-  }
-
-  /**
-   * Check if the request is a XMLHttpRequest.
-   *
-   * @param {(XMLHttpRequest|Object)} request
-   *   The request to be signed, which can be a XMLHttpRequest or a promise-based request Object (e.g. jqXHR).
-   * @returns {boolean}
-   *   TRUE if the request is a XMLHttpRequest; FALSE otherwise.
-   */
-  static isXMLHttpRequest(request) {
-    if (request instanceof XMLHttpRequest || request.onreadystatechange) {
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Check if the request is a promise-based request Object (e.g. jqXHR).
-   *
-   * @param {(XMLHttpRequest|Object)} request
-   *   The request to be signed, which can be a XMLHttpRequest or a promise-based request Object (e.g. jqXHR).
-   * @returns {boolean}
-   *   TRUE if the request is a promise-based request Object (e.g. jqXHR); FALSE otherwise.
-   */
-  static isPromiseRequest(request) {
-    return request.hasOwnProperty('setRequestHeader') &&
-      request.hasOwnProperty('getResponseHeader') &&
-      request.hasOwnProperty('promise');
-  }
-
-  /**
-   * Implementation of Steven Levithan uri parser.
-   *
-   * @param  {String}   str The uri to parse
-   * @param  {Boolean}  strictMode strict mode flag
-   * @return {Object}   parsed representation of a uri
-   */
-  static parseUri (str, strictMode = false) {
-    let o = {
-      key: ["source","protocol","host","userInfo","user","password","hostname","port","relative","pathname","directory","file","search","hash"],
-      q: {
-        name:   "queryKey",
-        parser: /(?:^|&)([^&=]*)=?([^&]*)/g
-      },
-      parser: {
-        strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-        loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
-      }
-    },
-    m  = o.parser[strictMode ? "strict" : "loose"].exec(str),
-    uri = {},
-    i  = 14;
-
-    while (i--) uri[o.key[i]] = m[i] || "";
-
-    uri[o.q.name] = {};
-    uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
-      if ($1) uri[o.q.name][$1] = $2;
-    });
-
-    return uri;
-  };
-
-  /**
-   * Sign the request using provided parameters.
-   *
-   * @param {(XMLHttpRequest|Object)} request
-   *   The request to be signed, which can be a XMLHttpRequest or a promise-based request Object (e.g. jqXHR).
-   * @param {string} method
-   *   Must be defined in the supported_methods.
-   * @param {string} path
-   *   End point's full URL path, including schema, port, query string, etc. It must already be URL encoded.
-   * @param {object} signed_headers
-   *   Signed headers.
-   * @param {string} content_type
-   *   Content type.
-   * @param {string} body
-   *   Body.
-   * @returns {string}
-   */
-  sign({request, method, path, signed_headers = {}, content_type = this.config.default_content_type, body = ''}) {
-    // Validate input. First 3 parameters are mandatory.
-    if (!request || !AcquiaHttpHmac.isXMLHttpRequest(request) && !AcquiaHttpHmac.isPromiseRequest(request)) {
-      throw new Error('The request is required, and must be a XMLHttpRequest or promise-based request Object (e.g. jqXHR).');
-    }
-    if (this.SUPPORTED_METHODS.indexOf(method) < 0) {
-      throw new Error(`The method must be "${this.SUPPORTED_METHODS.join('" or "')}". "${method}" is not supported.`);
+    if (SUPPORTED_METHODS.indexOf(method) < 0) {
+      throw new Error(`The method must be "${SUPPORTED_METHODS.join('" or "')}". "${method}" is not supported.`);
     }
     if (!path) {
-      throw new Error('The end point path must not be empty.');
+      throw new Error('path must not be empty.');
+    }
+    if (!public_key) {
+      throw new Error('public_key must not be empty.');
+    }
+    if (!secret_key) {
+      throw new Error('secret_key must not be empty.');
+    }
+    var req_is_valid = typeof req === "object" && !Array.isArray(req) && req !== null;
+    if (!req_is_valid) {
+      throw new Error('req object is invalid.');
     }
 
     /**
@@ -317,7 +46,20 @@ class AcquiaHttpHmac {
      *   When true, encode the parameter's value; otherwise don't encode.
      * @returns {string}
      */
-    let parametersToString = (parameters, value_prefix = '=', value_suffix = '', glue = '&', encode = true) => {
+    
+    let parametersToString = (parameters, value_prefix, value_suffix, glue, encode) => {
+      if(typeof value_prefix === "undefined") {
+        value_prefix = '=';
+      }
+      if(typeof value_suffix === "undefined") {
+        value_suffix = '';
+      }
+      if(typeof glue === "undefined") {
+        glue = '&';
+      }
+      if(typeof encode === "undefined") {
+        encode = true;
+      }
       let parameter_keys = Object.keys(parameters),
           processed_parameter_keys = [],
           processed_parameters = {},
@@ -344,6 +86,7 @@ class AcquiaHttpHmac {
       });
       return result_string_array.join(glue);
     };
+    
 
     /**
      * Generate a UUID nonce.
@@ -376,81 +119,43 @@ class AcquiaHttpHmac {
     };
 
     // Compute the authorization headers.
-    let nonce = generateNonce(),
-        parser = AcquiaHttpHmac.parseUri(path),
-        authorization_parameters = {
-          id: this.config.public_key,
+    var nonce = generateNonce();
+    var authorization_parameters = {
+          id: public_key,
           nonce: nonce,
-          realm: this.config.realm,
-          version: this.config.version
-        },
-        x_authorization_timestamp = Math.floor(Date.now() / 1000).toString(),
-        x_authorization_content_sha256 = willSendBody(body, method) ? CryptoJS.SHA256(body).toString(CryptoJS.enc.Base64) : '',
-        signature_base_string_content_suffix = willSendBody(body, method) ? `\n${content_type}\n${x_authorization_content_sha256}` : '',
-        site_port = parser.port ? `:${parser.port}` : '',
-        site_name_and_port = `${parser.hostname}${site_port}`,
-        url_query_string = parser.search,
-        signed_headers_string = parametersToString(signed_headers, ':', '', '\n', false),
-        signature_base_signed_headers_string = signed_headers_string === '' ? '' : `${signed_headers_string}\n`,
-        signature_base_string = `${method}\n${site_name_and_port}\n${parser.pathname || '/'}\n${url_query_string}\n${parametersToString(authorization_parameters)}\n${signature_base_signed_headers_string}${x_authorization_timestamp}${signature_base_string_content_suffix}`,
-        authorization_string = parametersToString(authorization_parameters, '="', '"', ','),
-        authorization_signed_headers_string = encodeURI(Object.keys(signed_headers).join('|||||').toLowerCase().split('|||||').sort().join(';')),
-        signature = encodeURI(CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64)),
-        authorization = `acquia-http-hmac ${authorization_string},headers="${authorization_signed_headers_string}",signature="${signature}"`;
+          realm: realm,
+          version: "2.0"
+        };
 
-    if (AcquiaHttpHmac.isXMLHttpRequest(request) && request.readyState === 0) {
-      request.open(method, path, true);
+    var x_authorization_timestamp = Math.floor(Date.now() / 1000).toString();
+    var x_authorization_content_sha256 = willSendBody(body, method) ? CryptoJS.SHA256(body).toString(CryptoJS.enc.Base64) : '';
+    var signature_base_string_content_suffix = willSendBody(body, method) ? `\n${content_type}\n${x_authorization_content_sha256}` : '';
+    var signed_headers_string = parametersToString(signed_headers, ':', '', '\n', false);
+    var signature_base_signed_headers_string = signed_headers_string === '' ? '' : `${signed_headers_string}\n`;
+    var signature_base_string = `${method}\n${host}\n${path}\n${query_string}\n${parametersToString(authorization_parameters)}\n${signature_base_signed_headers_string}${x_authorization_timestamp}${signature_base_string_content_suffix}`;
+    var authorization_string = parametersToString(authorization_parameters, '="', '"', ',');
+    var authorization_signed_headers_string = encodeURI(Object.keys(signed_headers).join('|||||').toLowerCase().split('|||||').sort().join(';'));
+    var signature = encodeURI(CryptoJS.HmacSHA256(signature_base_string, secret_key).toString(CryptoJS.enc.Base64));
+    var authorization = 'acquia-http-hmac ' + authorization_string;
+    if (authorization_signed_headers_string) {
+      authorization += ',headers=' + authorization_signed_headers_string;  
     }
+    authorization += ',signature="' + signature + '"';
+    authorization += ',version="' + version + '"';
 
     // Set the authorizations headers.
-    request.acquiaHttpHmac = {};
-    request.acquiaHttpHmac.timestamp = x_authorization_timestamp;
-    request.acquiaHttpHmac.nonce = nonce;
-    request.setRequestHeader('X-Authorization-Timestamp', x_authorization_timestamp);
-    request.setRequestHeader('Authorization', authorization);
+    req.acquiaHttpHmac = {};
+    req.acquiaHttpHmac.timestamp = x_authorization_timestamp;
+    req.acquiaHttpHmac.nonce = nonce;
+    req.headers['X-Authorization-Timestamp'] = x_authorization_timestamp;
+    req.headers['Authorization'] = authorization;
     if (x_authorization_content_sha256) {
-      request.setRequestHeader('X-Authorization-Content-SHA256', x_authorization_content_sha256);
+      req.headers['X-Authorization-Content-SHA256'] = x_authorization_content_sha256;
     }
 
     console.log('signature_base_string', signature_base_string);
-    console.log('authorization', authorization);
-    console.log('x_authorization_timestamp', x_authorization_timestamp);
-    console.log('nonce', nonce);
-    console.log('x_authorization_content_sha256', x_authorization_content_sha256);
-  };
-
-  /**
-   * Check if the request has a valid response.
-   *
-   * @param {XMLHttpRequest|Object} request
-   *   The request to be validated.
-   * @returns {boolean}
-   *   TRUE if the request is valid; FALSE otherwise.
-   */
-  hasValidResponse (request) {
-    let signature_base_string = `${request.acquiaHttpHmac.nonce}\n${request.acquiaHttpHmac.timestamp}\n${request.responseText}`,
-        signature = CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64),
-        server_signature = request.getResponseHeader('X-Server-Authorization-HMAC-SHA256');
-
-    console.log('signature_base_string', signature_base_string);
-    console.log('signature ', signature);
-    console.log('server_signature', server_signature);
-
-    return signature === server_signature;
-  };
-}
-
-if (typeof exports === "object") {
-  // CommonJS
-  var CryptoJS = require('crypto-js');
-  var XMLHttpRequest = XMLHttpRequest || require("xmlhttprequest").XMLHttpRequest;
-  module.exports = exports = AcquiaHttpHmac;
-}
-else if (typeof define === "function" && define.amd) {
-  // AMD
-  throw new Error('Update here to support AMD.')
-}
-else {
-  // Global (browser)
-  window.AcquiaHttpHmac = AcquiaHttpHmac;
-}
+    console.log(2,'authorization', authorization);
+    console.log(3,'x_authorization_timestamp', x_authorization_timestamp);
+    console.log(4,'nonce', nonce);
+    console.log(5,'x_authorization_content_sha256', x_authorization_content_sha256);
+};

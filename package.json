@@ -2,7 +2,7 @@
   "name": "http-hmac-javascript",
   "version": "0.2.3",
   "description": "HTTP HMAC JavaScript Library",
-  "main": "./lib/es5/hmac.js",
+  "main": "./src/hmac.js",
   "dependencies": {
     "crypto-js": "^3.1.6",
     "xmlhttprequest": "^1.8.0"
