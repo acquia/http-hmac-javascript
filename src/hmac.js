@@ -31,93 +31,6 @@ exports.sign = function(req, public_key, secret_key) {
       throw new Error('req object is invalid.');
     }
 
-    /**
-     * Convert an object of parameters to a string.
-     *
-     * @param {object} parameters
-     *   Header parameters in key: value pair.
-     * @param value_prefix
-     *   The parameter value's prefix decoration.
-     * @param value_suffix
-     *   The parameter value's suffix decoration.
-     * @param glue
-     *   When join(), use this string as the glue.
-     * @param encode
-     *   When true, encode the parameter's value; otherwise don't encode.
-     * @returns {string}
-     */
-    
-    let parametersToString = (parameters, value_prefix, value_suffix, glue, encode) => {
-      if(typeof value_prefix === "undefined") {
-        value_prefix = '=';
-      }
-      if(typeof value_suffix === "undefined") {
-        value_suffix = '';
-      }
-      if(typeof glue === "undefined") {
-        glue = '&';
-      }
-      if(typeof encode === "undefined") {
-        encode = true;
-      }
-      let parameter_keys = Object.keys(parameters),
-          processed_parameter_keys = [],
-          processed_parameters = {},
-          result_string_array = [];
-
-      // Process the headers.
-      // 1) Process the parameter keys into lowercase, and
-      // 2) Process values to URI encoded if applicable.
-      parameter_keys.forEach((parameter_key) => {
-        if (!parameters.hasOwnProperty(parameter_key)) {
-          return;
-        }
-        let processed_parameter_key = parameter_key.toLowerCase();
-        processed_parameter_keys.push(processed_parameter_key);
-        processed_parameters[processed_parameter_key] = encode ? encodeURIComponent(parameters[parameter_key]) : parameters[parameter_key];
-      });
-
-      // Process into result string.
-      processed_parameter_keys.sort().forEach((processed_parameter_key) => {
-        if (!processed_parameters.hasOwnProperty(processed_parameter_key)) {
-          return;
-        }
-        result_string_array.push(`${processed_parameter_key}${value_prefix}${processed_parameters[processed_parameter_key]}${value_suffix}`);
-      });
-      return result_string_array.join(glue);
-    };
-    
-
-    /**
-     * Generate a UUID nonce.
-     *
-     * @returns {string}
-     */
-    let generateNonce = () => {
-      let d = Date.now();
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        var r = (d + Math.random()*16)%16 | 0;
-        d = Math.floor(d/16);
-        return (c=='x' ? r : (r&0x7|0x8)).toString(16);
-      });
-    };
-
-    /**
-     * Determine if this request sends body content (or skips silently).
-     *
-     * Note: modern browsers always skip body at send(), when the request method is "GET" or "HEAD".
-     *
-     * @param body
-     *   Body content.
-     * @param method
-     *   The request's method.
-     * @returns {boolean}
-     */
-    let willSendBody = (body, method) => {
-      let bodyless_request_types = ['GET', 'HEAD'];
-      return body.length !== 0 && bodyless_request_types.indexOf(method) < 0;
-    };
-
     // Compute the authorization headers.
     var nonce = generateNonce();
     var authorization_parameters = {
@@ -152,10 +65,93 @@ exports.sign = function(req, public_key, secret_key) {
     if (x_authorization_content_sha256) {
       req.headers['X-Authorization-Content-SHA256'] = x_authorization_content_sha256;
     }
+};
 
-    console.log('signature_base_string', signature_base_string);
-    console.log(2,'authorization', authorization);
-    console.log(3,'x_authorization_timestamp', x_authorization_timestamp);
-    console.log(4,'nonce', nonce);
-    console.log(5,'x_authorization_content_sha256', x_authorization_content_sha256);
+
+
+/**
+ * Convert an object of parameters to a string.
+ *
+ * @param {object} parameters
+ *   Header parameters in key: value pair.
+ * @param value_prefix
+ *   The parameter value's prefix decoration.
+ * @param value_suffix
+ *   The parameter value's suffix decoration.
+ * @param glue
+ *   When join(), use this string as the glue.
+ * @param encode
+ *   When true, encode the parameter's value; otherwise don't encode.
+ * @returns {string}
+ */
+
+let parametersToString = (parameters, value_prefix, value_suffix, glue, encode) => {
+  if(typeof value_prefix === "undefined") {
+    value_prefix = '=';
+  }
+  if(typeof value_suffix === "undefined") {
+    value_suffix = '';
+  }
+  if(typeof glue === "undefined") {
+    glue = '&';
+  }
+  if(typeof encode === "undefined") {
+    encode = true;
+  }
+  let parameter_keys = Object.keys(parameters),
+      processed_parameter_keys = [],
+      processed_parameters = {},
+      result_string_array = [];
+
+  // Process the headers.
+  // 1) Process the parameter keys into lowercase, and
+  // 2) Process values to URI encoded if applicable.
+  parameter_keys.forEach((parameter_key) => {
+    if (!parameters.hasOwnProperty(parameter_key)) {
+      return;
+    }
+    let processed_parameter_key = parameter_key.toLowerCase();
+    processed_parameter_keys.push(processed_parameter_key);
+    processed_parameters[processed_parameter_key] = encode ? encodeURIComponent(parameters[parameter_key]) : parameters[parameter_key];
+  });
+
+  // Process into result string.
+  processed_parameter_keys.sort().forEach((processed_parameter_key) => {
+    if (!processed_parameters.hasOwnProperty(processed_parameter_key)) {
+      return;
+    }
+    result_string_array.push(`${processed_parameter_key}${value_prefix}${processed_parameters[processed_parameter_key]}${value_suffix}`);
+  });
+  return result_string_array.join(glue);
+};
+
+
+/**
+ * Generate a UUID nonce.
+ *
+ * @returns {string}
+ */
+let generateNonce = () => {
+  let d = Date.now();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    var r = (d + Math.random()*16)%16 | 0;
+    d = Math.floor(d/16);
+    return (c=='x' ? r : (r&0x7|0x8)).toString(16);
+  });
+};
+
+/**
+ * Determine if this request sends body content (or skips silently).
+ *
+ * Note: modern browsers always skip body at send(), when the request method is "GET" or "HEAD".
+ *
+ * @param body
+ *   Body content.
+ * @param method
+ *   The request's method.
+ * @returns {boolean}
+ */
+let willSendBody = (body, method) => {
+  let bodyless_request_types = ['GET', 'HEAD'];
+  return body.length !== 0 && bodyless_request_types.indexOf(method) < 0;
 };
