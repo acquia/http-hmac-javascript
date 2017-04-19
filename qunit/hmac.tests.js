@@ -260,7 +260,7 @@ QUnit.test('Test sign(), assert throwing various Errors.', function(assert) {
     function() {
       HMAC.sign(sign_parameters);
     },
-    new Error('The method must be "GET" or "POST" or "PUT" or "DELETE" or "HEAD" or "OPTIONS" or "CUSTOM". "undefined" is not supported.'),
+    new Error('The method must be "GET" or "POST" or "PUT" or "PATCH" or "DELETE" or "HEAD" or "OPTIONS" or "CUSTOM". "undefined" is not supported.'),
     'Assert the "method" exists.'
   );
   sign_parameters.method = method;
