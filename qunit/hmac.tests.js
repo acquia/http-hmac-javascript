@@ -177,7 +177,7 @@ QUnit.test('Test sign(), asserts constructor set config.', function(assert) {
     version: '2.0',
     default_content_type: 'application/XML'
   });
-  var secret_key_words = [-4999, -7, 503316480];
+  var secret_key_words = [-1692390279, -891374583, 503316480];
   assert.equal(HMAC_test_constructor.config.realm, 'my_realm', 'constructor() sets realm.');
   assert.equal(HMAC_test_constructor.config.public_key, 'my_public_key', 'constructor() sets public_key.');
   assert.deepEqual(HMAC_test_constructor.config.parsed_secret_key.words, secret_key_words, 'constructor() sets secret_key.');
@@ -260,7 +260,7 @@ QUnit.test('Test sign(), assert throwing various Errors.', function(assert) {
     function() {
       HMAC.sign(sign_parameters);
     },
-    new Error('The method must be "GET" or "POST" or "PUT" or "DELETE" or "HEAD" or "OPTIONS" or "CUSTOM". "undefined" is not supported.'),
+    new Error('The method must be "GET" or "POST" or "PUT" or "PATCH" or "DELETE" or "HEAD" or "OPTIONS" or "CUSTOM". "undefined" is not supported.'),
     'Assert the "method" exists.'
   );
   sign_parameters.method = method;
