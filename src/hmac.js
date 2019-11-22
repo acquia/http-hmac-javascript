@@ -1,4 +1,5 @@
 'use strict';
+
 var CryptoJS = require('crypto-js');
 
 exports.sign = function(req, public_key, secret_key) {
@@ -41,7 +42,7 @@ exports.sign = function(req, public_key, secret_key) {
         };
 
     var x_authorization_timestamp = Math.floor(Date.now() / 1000).toString();
-    var x_authorization_content_sha256 = willSendBody(body, method) ? CryptoJS.SHA256(body).toString(CryptoJS.enc.Base64) : '';
+    var x_authorization_content_sha256 = willSendBody(body, method) ? CryptoJS.SHA256(body instanceof Buffer ? CryptoJS.enc.Base64.parse(body.toString('base64')) : body).toString(CryptoJS.enc.Base64) : '';
     var signature_base_string_content_suffix = willSendBody(body, method) ? `\n${content_type}\n${x_authorization_content_sha256}` : '';
     var signed_headers_string = parametersToString(signed_headers, ':', '', '\n', false);
     var signature_base_signed_headers_string = signed_headers_string === '' ? '' : `${signed_headers_string}\n`;
