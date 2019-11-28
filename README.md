@@ -42,3 +42,7 @@ npm -v
 
 * Run `npm install` to install all dependencies.
 * In root directory, run ```gulp test``` to see the current test results. Alternatively, you can go to the _qunit/hmac.html_ page in your browser.
+
+## Submitting PR
+* PR welcomed!
+* Please run `gulp build-demo` and submit along all resulting file updates.
