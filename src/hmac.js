@@ -211,6 +211,7 @@ class AcquiaHttpHmac {
     this.SUPPORTED_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'CUSTOM'];
   }
 
+
   /**
    * Check if the request is a XMLHttpRequest.
    *
@@ -291,13 +292,10 @@ class AcquiaHttpHmac {
    *   Body.
    * @returns {object}
    */
-  getHeaders({request, method, path, signed_headers = {}, content_type = this.config.default_content_type, body = ''}) {
-    // Validate input. First 3 parameters are mandatory.
-    if (!request || !AcquiaHttpHmac.isXMLHttpRequest(request) && !AcquiaHttpHmac.isPromiseRequest(request)) {
-      throw new Error('The request is required, and must be a XMLHttpRequest or promise-based request Object (e.g. jqXHR).');
-    }
+  getHeaders({method, path, signed_headers = {}, content_type = this.config.default_content_type, body = ''}) {
+    // Validate input. First 2 parameters are mandatory.
     if (this.SUPPORTED_METHODS.indexOf(method) < 0) {
-      throw new Error(`The method must be "${this.SUPPORTED_METHODS.join('" or "')}". "${method}" is not supported.`);
+      throw new Error(`Args are ${method} TA. The method must be "${this.SUPPORTED_METHODS.join('" or "')}". "${method}" is not supported.`);
     }
     if (!path) {
       throw new Error('The end point path must not be empty.');
@@ -399,9 +397,6 @@ class AcquiaHttpHmac {
         signature = encodeURI(CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64)),
         authorization = `acquia-http-hmac ${authorization_string},headers="${authorization_signed_headers_string}",signature="${signature}"`;
 
-    if (AcquiaHttpHmac.isXMLHttpRequest(request) && request.readyState === 0) {
-      request.open(method, path, true);
-    }
 
     const headers = {
       'X-Authorization-Timestamp':  x_authorization_timestamp,
@@ -445,7 +440,13 @@ class AcquiaHttpHmac {
       throw new Error('The request is required, and must be a XMLHttpRequest or promise-based request Object (e.g. jqXHR).');
     }
 
-    const headers = this.getHeaders(...arguments);
+    const headers = this.getHeaders({method, path, signed_headers, content_type, body});
+
+    // Open request if needed and set headers.
+    if (AcquiaHttpHmac.isXMLHttpRequest(request) && request.readyState === 0) {
+      request.open(method, path, true);
+    }
+    
     Object.keys(headers).forEach((headerName) => request.setRequestHeader(headerName, headers[headerName]));
   }
 

@@ -219,8 +219,10 @@ QUnit.test('Test sign(), asserts constructor set config throwing various Errors.
   );
 });
 
+
+
 QUnit.test('Test sign(), assert throwing various Errors.', function(assert) {
-  expect(4);
+  expect(2);
 
   var method = 'GET',
       path = 'http://fakesite.com:8888/fake-api?first_param=first value%25&second_param=second_valuè',
@@ -247,24 +249,6 @@ QUnit.test('Test sign(), assert throwing various Errors.', function(assert) {
     'Assert the "request" is a XMLHttpRequest or promise-based request Object.'
   );
   sign_parameters.request = request;
-
-  assert.throws(
-    function() {
-      HMAC.sign(sign_parameters);
-    },
-    new Error('The method must be "GET" or "POST" or "PUT" or "PATCH" or "DELETE" or "HEAD" or "OPTIONS" or "CUSTOM". "undefined" is not supported.'),
-    'Assert the "method" exists.'
-  );
-  sign_parameters.method = method;
-
-  assert.throws(
-    function() {
-      HMAC.sign(sign_parameters);
-    },
-    new Error('The end point path must not be empty.'),
-    'Assert the "path" exists.'
-  );
-  sign_parameters.path = path;
 });
 
 QUnit.test('Test hasValidResponse(), asserts pass.', function(assert) {
