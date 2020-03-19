@@ -274,7 +274,7 @@ class AcquiaHttpHmac {
     return uri;
   };
 
-  static generateTimestamp() {
+  #generateTimestamp() {
     return Math.floor(Date.now() / 1000).toString();
   };
 
@@ -283,7 +283,7 @@ class AcquiaHttpHmac {
      *
      * @returns {string}
   */
-  static generateNonce() {
+  #generateNonce() {
     let d = Date.now();
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
       var r = (d + Math.random()*16)%16 | 0;
@@ -380,7 +380,7 @@ class AcquiaHttpHmac {
     };
 
     // Compute the authorization headers.
-    nonce = !!nonce ? nonce : AcquiaHttpHmac.generateNonce();
+    nonce = !!nonce ? nonce : this.#generateNonce();
     let parser = AcquiaHttpHmac.parseUri(path),
         authorization_parameters = {
           id: this.config.public_key,
@@ -388,7 +388,7 @@ class AcquiaHttpHmac {
           realm: this.config.realm,
           version: this.config.version
         },
-        x_authorization_timestamp = timestamp || AcquiaHttpHmac.generateTimestamp(),
+        x_authorization_timestamp = timestamp || this.#generateTimestamp(),
         x_authorization_content_sha256 = willSendBody(body, method) ? CryptoJS.SHA256(body).toString(CryptoJS.enc.Base64) : '',
         signature_base_string_content_suffix = willSendBody(body, method) ? `\n${content_type}\n${x_authorization_content_sha256}` : '',
         site_port = parser.port ? `:${parser.port}` : '',
@@ -446,8 +446,8 @@ class AcquiaHttpHmac {
       throw new Error('The request is required, and must be a XMLHttpRequest or promise-based request Object (e.g. jqXHR).');
     }
 
-    const nonce = AcquiaHttpHmac.generateNonce();
-    const x_authorization_timestamp = AcquiaHttpHmac.generateTimestamp();
+    const nonce = this.#generateNonce();
+    const x_authorization_timestamp = this.#generateTimestamp();
 
     const headers = this.getHeaders(
       { 

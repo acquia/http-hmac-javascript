@@ -18,10 +18,13 @@ gulp.task('clean-lib', () => {
 
 gulp.task('build-lib', gulp.series('clean-lib', () => {
   return gulp.src(['./src/hmac.js'])
+  .pipe(babel({
+      plugins: [["@babel/plugin-proposal-private-methods", { "loose": true } ]]
+  }))
   .pipe(stripDebug())
   .pipe(gulp.dest('./lib/es6'))
   .pipe(babel({
-    presets: ['es2015']
+    presets: ["@babel/preset-env"],
   }))
   .pipe(gulp.dest('./lib/es5'))
   .pipe(rename('hmac.min.js'))
@@ -39,7 +42,7 @@ gulp.task('build-demo', gulp.series('clean-demo', 'build-lib', (done) => {
     .pipe(gulp.dest('./demo'));
   gulp.src(['./src/demo/get.js'])
     .pipe(babel({
-      presets: ['es2015']
+      presets: ["@babel/preset-env"],
     }))
     .pipe(addsrc.prepend(['./lib/es5/hmac.js', './node_modules/crypto-js/core.js', './node_modules/crypto-js/hmac.js', './node_modules/crypto-js/sha256.js', './node_modules/crypto-js/hmac-sha256.js', './node_modules/crypto-js/enc-base64.js']))
     .pipe(uglify())
@@ -47,7 +50,7 @@ gulp.task('build-demo', gulp.series('clean-demo', 'build-lib', (done) => {
     .pipe(gulp.dest('./demo'));
   gulp.src(['./src/demo/post.js'])
     .pipe(babel({
-      presets: ['es2015']
+      presets: ["@babel/preset-env"],
     }))
     .pipe(addsrc.prepend(['./lib/es5/hmac.js', './node_modules/crypto-js/core.js', './node_modules/crypto-js/hmac.js', './node_modules/crypto-js/sha256.js', './node_modules/crypto-js/hmac-sha256.js', './node_modules/crypto-js/enc-base64.js']))
     .pipe(uglify())
@@ -55,7 +58,7 @@ gulp.task('build-demo', gulp.series('clean-demo', 'build-lib', (done) => {
     .pipe(gulp.dest('./demo'));
   gulp.src(['./src/demo/ajax.js'])
     .pipe(babel({
-      presets: ['es2015']
+      presets: ["@babel/preset-env"],
     }))
     .pipe(addsrc.prepend(['./lib/es5/hmac.js', './node_modules/crypto-js/core.js', './node_modules/crypto-js/hmac.js', './node_modules/crypto-js/sha256.js', './node_modules/crypto-js/hmac-sha256.js', './node_modules/crypto-js/enc-base64.js', './node_modules/jquery/dist/jquery.js']))
     .pipe(uglify())
