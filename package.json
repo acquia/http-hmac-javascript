@@ -1,6 +1,6 @@
 {
   "name": "http-hmac-javascript",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "HTTP HMAC JavaScript Library",
   "main": "./lib/es5/hmac.js",
   "dependencies": {
