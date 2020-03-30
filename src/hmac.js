@@ -211,6 +211,7 @@ class AcquiaHttpHmac {
     this.SUPPORTED_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'CUSTOM'];
   }
 
+
   /**
    * Check if the request is a XMLHttpRequest.
    *
@@ -273,8 +274,26 @@ class AcquiaHttpHmac {
     return uri;
   };
 
+  #generateTimestamp() {
+    return Math.floor(Date.now() / 1000).toString();
+  };
+
   /**
-   * Sign the request using provided parameters.
+     * Generate a UUID nonce.
+     *
+     * @returns {string}
+  */
+  #generateNonce() {
+    let d = Date.now();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      var r = (d + Math.random()*16)%16 | 0;
+      d = Math.floor(d/16);
+      return (c=='x' ? r : (r&0x7|0x8)).toString(16);
+    });
+  };
+
+  /**
+   * Generate signed headers using provided parameters.
    *
    * @param {(XMLHttpRequest|Object)} request
    *   The request to be signed, which can be a XMLHttpRequest or a promise-based request Object (e.g. jqXHR).
@@ -288,15 +307,12 @@ class AcquiaHttpHmac {
    *   Content type.
    * @param {string} body
    *   Body.
-   * @returns {string}
+   * @returns {object}
    */
-  sign({request, method, path, signed_headers = {}, content_type = this.config.default_content_type, body = ''}) {
-    // Validate input. First 3 parameters are mandatory.
-    if (!request || !AcquiaHttpHmac.isXMLHttpRequest(request) && !AcquiaHttpHmac.isPromiseRequest(request)) {
-      throw new Error('The request is required, and must be a XMLHttpRequest or promise-based request Object (e.g. jqXHR).');
-    }
+  getHeaders({method, path, signed_headers = {}, content_type = this.config.default_content_type, body = '', nonce, timestamp}) {
+    // Validate input. First 2 parameters are mandatory.
     if (this.SUPPORTED_METHODS.indexOf(method) < 0) {
-      throw new Error(`The method must be "${this.SUPPORTED_METHODS.join('" or "')}". "${method}" is not supported.`);
+      throw new Error(`Args are ${method} TA. The method must be "${this.SUPPORTED_METHODS.join('" or "')}". "${method}" is not supported.`);
     }
     if (!path) {
       throw new Error('The end point path must not be empty.');
@@ -345,19 +361,7 @@ class AcquiaHttpHmac {
       return result_string_array.join(glue);
     };
 
-    /**
-     * Generate a UUID nonce.
-     *
-     * @returns {string}
-     */
-    let generateNonce = () => {
-      let d = Date.now();
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        var r = (d + Math.random()*16)%16 | 0;
-        d = Math.floor(d/16);
-        return (c=='x' ? r : (r&0x7|0x8)).toString(16);
-      });
-    };
+
 
     /**
      * Determine if this request sends body content (or skips silently).
@@ -376,15 +380,15 @@ class AcquiaHttpHmac {
     };
 
     // Compute the authorization headers.
-    let nonce = generateNonce(),
-        parser = AcquiaHttpHmac.parseUri(path),
+    nonce = !!nonce ? nonce : this.#generateNonce();
+    let parser = AcquiaHttpHmac.parseUri(path),
         authorization_parameters = {
           id: this.config.public_key,
           nonce: nonce,
           realm: this.config.realm,
           version: this.config.version
         },
-        x_authorization_timestamp = Math.floor(Date.now() / 1000).toString(),
+        x_authorization_timestamp = timestamp || this.#generateTimestamp(),
         x_authorization_content_sha256 = willSendBody(body, method) ? CryptoJS.SHA256(body).toString(CryptoJS.enc.Base64) : '',
         signature_base_string_content_suffix = willSendBody(body, method) ? `\n${content_type}\n${x_authorization_content_sha256}` : '',
         site_port = parser.port ? `:${parser.port}` : '',
@@ -398,18 +402,14 @@ class AcquiaHttpHmac {
         signature = encodeURI(CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64)),
         authorization = `acquia-http-hmac ${authorization_string},headers="${authorization_signed_headers_string}",signature="${signature}"`;
 
-    if (AcquiaHttpHmac.isXMLHttpRequest(request) && request.readyState === 0) {
-      request.open(method, path, true);
-    }
 
-    // Set the authorizations headers.
-    request.acquiaHttpHmac = {};
-    request.acquiaHttpHmac.timestamp = x_authorization_timestamp;
-    request.acquiaHttpHmac.nonce = nonce;
-    request.setRequestHeader('X-Authorization-Timestamp', x_authorization_timestamp);
-    request.setRequestHeader('Authorization', authorization);
+    const headers = {
+      'X-Authorization-Timestamp':  x_authorization_timestamp,
+      Authorization: authorization
+    };
+
     if (x_authorization_content_sha256) {
-      request.setRequestHeader('X-Authorization-Content-SHA256', x_authorization_content_sha256);
+      headers['X-Authorization-Content-SHA256'] =  x_authorization_content_sha256;
     }
 
     console.log('signature_base_string', signature_base_string);
@@ -417,7 +417,60 @@ class AcquiaHttpHmac {
     console.log('x_authorization_timestamp', x_authorization_timestamp);
     console.log('nonce', nonce);
     console.log('x_authorization_content_sha256', x_authorization_content_sha256);
+
+    return headers;
   };
+
+
+
+  /**
+   * Sign the request using provided parameters.
+   *
+   * @param {(XMLHttpRequest|Object)} request
+   *   The request to be signed, which can be a XMLHttpRequest or a promise-based request Object (e.g. jqXHR).
+   * @param {string} method
+   *   Must be defined in the supported_methods.
+   * @param {string} path
+   *   End point's full URL path, including schema, port, query string, etc. It must already be URL encoded.
+   * @param {object} signed_headers
+   *   Signed headers.
+   * @param {string} content_type
+   *   Content type.
+   * @param {string} body
+   *   Body.
+   * @returns {string}
+   */
+  sign({request, method, path, signed_headers = {}, content_type = this.config.default_content_type, body = ''}) {
+    // Validate input.
+    if (!request || !AcquiaHttpHmac.isXMLHttpRequest(request) && !AcquiaHttpHmac.isPromiseRequest(request)) {
+      throw new Error('The request is required, and must be a XMLHttpRequest or promise-based request Object (e.g. jqXHR).');
+    }
+
+    const nonce = this.#generateNonce();
+    const x_authorization_timestamp = this.#generateTimestamp();
+
+    const headers = this.getHeaders(
+      { 
+        method,
+        path,
+        signed_headers,
+        content_type,
+        body,
+        nonce,
+        x_authorization_timestamp
+      });
+
+    // Open request if needed and set headers.
+    if (AcquiaHttpHmac.isXMLHttpRequest(request) && request.readyState === 0) {
+      request.open(method, path, true);
+    }
+
+    request.acquiaHttpHmac = {};
+    request.acquiaHttpHmac.timestamp = x_authorization_timestamp;
+    request.acquiaHttpHmac.nonce = nonce;
+   
+    Object.keys(headers).forEach((headerName) => request.setRequestHeader(headerName, headers[headerName]));
+  }
 
   /**
    * Check if the request has a valid response.

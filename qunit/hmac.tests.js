@@ -30,6 +30,54 @@ QUnit.module('HTTP HMAC JavaScript Library tests', {
   }
 });
 
+QUnit.test('Test getHeaders(), asserts GET pass.', function(assert) {
+  expect(3);
+
+  var method = 'GET',
+      path = 'http://fakesite.com:8888',
+      signed_headers = {},
+      content_type = 'text/plain',
+      responseText = 'correct response text';
+
+  var sign_parameters = {
+    method: method,
+    path: path,
+    signed_headers: signed_headers,
+    content_type: content_type
+  };
+  const headers = HMAC.getHeaders(sign_parameters);
+
+  var authorization = 'acquia-http-hmac id="ABCD-1234",nonce="11bdbac4-1111-4111-9111-111111111111",realm="dice%5E",version="2.0",headers="",signature="aeOVMGoyBcWZPyyzdjrzFkGAF8gAGaeqbfA324L5q8Y="';
+  assert.equal(headers['X-Authorization-Timestamp'], 1000000, 'getHeaders() creates "X-Authorization-Timestamp" request header.');
+  assert.equal(headers['Authorization'], authorization, 'getHeaders() creates "Authorization".');
+  assert.equal(headers['X-Authorization-Content-SHA256'], undefined, 'sign() does not create "X-Authorization-Content-SHA256" request header for GET request.');
+});
+
+QUnit.test('Test getHeaders(), asserts POST pass.', function(assert) {
+  expect(3);
+
+  var method = 'POST',
+      path = 'http://fakesite.com:8888',
+      signed_headers = {},
+      content_type = 'text/plain',
+      body = 'correct request text',
+      responseText = 'correct response text';
+
+  var sign_parameters = {
+    method: method,
+    path: path,
+    signed_headers: signed_headers,
+    content_type: content_type,
+    body: body
+  };
+  const headers = HMAC.getHeaders(sign_parameters);
+
+  var authorization = 'acquia-http-hmac id="ABCD-1234",nonce="11bdbac4-1111-4111-9111-111111111111",realm="dice%5E",version="2.0",headers="",signature="pNUQl+h18e+F6Lzd2lDGe53uaWCDbqQ5eqGnxrC433M="';
+  assert.equal(headers['X-Authorization-Timestamp'], 1000000, 'getHeaders() creates "X-Authorization-Timestamp" request header.');
+  assert.equal(headers['Authorization'], authorization, 'getHeaders() creates "Authorization".');
+  assert.equal(headers['X-Authorization-Content-SHA256'], '2WR1x45F7yiwv/OKh43jtkmbsMSfQvXxeR3z6RJHPBg=', 'getHeaders() creates "X-Authorization-Content-SHA256" request header for POST request.');
+});
+
 QUnit.test('Test sign(), asserts GET pass.', function(assert) {
   expect(5);
 
@@ -228,7 +276,7 @@ QUnit.test('Test sign(), asserts constructor set config throwing various Errors.
 });
 
 QUnit.test('Test sign(), assert throwing various Errors.', function(assert) {
-  expect(4);
+  expect(2);
 
   var method = 'GET',
       path = 'http://fakesite.com:8888/fake-api?first_param=first value%25&second_param=second_valuè',
@@ -255,24 +303,6 @@ QUnit.test('Test sign(), assert throwing various Errors.', function(assert) {
     'Assert the "request" is a XMLHttpRequest or promise-based request Object.'
   );
   sign_parameters.request = request;
-
-  assert.throws(
-    function() {
-      HMAC.sign(sign_parameters);
-    },
-    new Error('The method must be "GET" or "POST" or "PUT" or "PATCH" or "DELETE" or "HEAD" or "OPTIONS" or "CUSTOM". "undefined" is not supported.'),
-    'Assert the "method" exists.'
-  );
-  sign_parameters.method = method;
-
-  assert.throws(
-    function() {
-      HMAC.sign(sign_parameters);
-    },
-    new Error('The end point path must not be empty.'),
-    'Assert the "path" exists.'
-  );
-  sign_parameters.path = path;
 });
 
 QUnit.test('Test hasValidResponse(), asserts pass.', function(assert) {
