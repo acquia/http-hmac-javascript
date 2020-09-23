@@ -164,6 +164,31 @@ if (!Array.prototype.indexOf) {
     return -1;
   };
 }
+//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign#Polyfill
+// Because PhantomJS does not fully support JS APIs
+if (typeof Object.assign != 'function') {
+  (function () {
+    Object.assign = function (target) {
+      'use strict';
+      if (target === undefined || target === null) {
+        throw new TypeError('Cannot convert undefined or null to object');
+      }
+
+      var output = Object(target);
+      for (var index = 1; index < arguments.length; index++) {
+        var source = arguments[index];
+        if (source !== undefined && source !== null) {
+          for (var nextKey in source) {
+            if (source.hasOwnProperty(nextKey)) {
+              output[nextKey] = source[nextKey];
+            }
+          }
+        }
+      }
+      return output;
+    };
+  })();
+}
 
 /**
  * AcquiaHttpHmac - Let's you sign a XMLHttpRequest or promised-based request object (e.g. jqXHR) by Acquia's
@@ -422,6 +447,26 @@ class AcquiaHttpHmac {
   };
 
 
+  /**
+   * Generate signed headers using provided parameters.
+   *
+   * @param {Object} signParameters
+   *   The signing parameters to be signed, which include method, path, headers, content type, body.
+   * @returns {object}
+   *   The object contains headers, nonce, and timestamp.
+   */
+  getFetchHeaders(signParameters) {
+    const nonce = this.#generateNonce();
+    const timestamp = this.#generateTimestamp();
+    const copiedParameters = Object.assign({}, signParameters);
+
+    Object.assign(copiedParameters, { nonce, timestamp });
+
+    const headers = this.getHeaders(copiedParameters);
+
+    return { headers, nonce, timestamp };
+  }
+
 
   /**
    * Sign the request using provided parameters.
@@ -473,6 +518,31 @@ class AcquiaHttpHmac {
   }
 
   /**
+   * Helper method to perform the Crypto processing and comparison.
+   *
+   * @param {String} responseText
+   *   The content (as string) of the server's response.
+   * @param {String} sha256Header
+   *   The `X-Server-Authorization-HMAC-SHA256` header from the server's response.
+   * @param {String} nonce
+   *   The nonce used to sign the sent request.
+   * @param {String} timestamp
+   *   The nonce used to sign the sent request.
+   * @returns {boolean}
+   *   TRUE if the request is valid; FALSE otherwise.
+   */
+  #hasValidResponse(responseText, sha256Header, nonce, timestamp) {
+    const signature_base_string = `${nonce}\n${timestamp}\n${responseText}`;
+    const signature = CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64);
+
+    console.log('signature_base_string', signature_base_string);
+    console.log('signature ', signature);
+    console.log('server_signature', sha256Header);
+
+    return signature === sha256Header;    
+  }
+
+  /**
    * Check if the request has a valid response.
    *
    * @param {XMLHttpRequest|Object} request
@@ -481,16 +551,37 @@ class AcquiaHttpHmac {
    *   TRUE if the request is valid; FALSE otherwise.
    */
   hasValidResponse (request) {
-    let signature_base_string = `${request.acquiaHttpHmac.nonce}\n${request.acquiaHttpHmac.timestamp}\n${request.responseText}`,
-        signature = CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64),
-        server_signature = request.getResponseHeader('X-Server-Authorization-HMAC-SHA256');
-
-    console.log('signature_base_string', signature_base_string);
-    console.log('signature ', signature);
-    console.log('server_signature', server_signature);
-
-    return signature === server_signature;
+    return this.#hasValidResponse(
+      request.responseText,
+      request.getResponseHeader('X-Server-Authorization-HMAC-SHA256'),
+      request.acquiaHttpHmac.nonce,
+      request.acquiaHttpHmac.timestamp,
+    );
   };
+
+  /**
+   * Check if the Fetch Response is valid.
+   *
+   * @param {String} responseText
+   *   The Fetch response's text.
+   * @param {Object} headers
+   *   The Fetch response's headers.
+   * @param {String} nonce
+   *   The nonce used to sign the Fetch request.
+   * @param {String} timestamp
+   *   The nonce used to sign the Fetch request.
+   * @returns {boolean}
+   *   TRUE if the request is valid; FALSE otherwise.
+   */
+  hasValidFetchResponse (responseText, headers, nonce, timestamp) {
+    return this.#hasValidResponse(
+      responseText,
+      headers['X-Server-Authorization-HMAC-SHA256'],
+      nonce,
+      timestamp,
+    );
+  };
+
 }
 
 if (typeof exports === "object") {

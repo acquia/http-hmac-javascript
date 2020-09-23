@@ -26,7 +26,7 @@ QUnit.module('HTTP HMAC JavaScript Library tests', {
     request = new MockHttpRequest();
   },
   teardown: function() {
-    delete request, HMAC;
+    request = undefined;
   }
 });
 
@@ -76,6 +76,56 @@ QUnit.test('Test getHeaders(), asserts POST pass.', function(assert) {
   assert.equal(headers['X-Authorization-Timestamp'], 1000000, 'getHeaders() creates "X-Authorization-Timestamp" request header.');
   assert.equal(headers['Authorization'], authorization, 'getHeaders() creates "Authorization".');
   assert.equal(headers['X-Authorization-Content-SHA256'], '2WR1x45F7yiwv/OKh43jtkmbsMSfQvXxeR3z6RJHPBg=', 'getHeaders() creates "X-Authorization-Content-SHA256" request header for POST request.');
+});
+
+QUnit.test('Test getFetchHeaders(), asserts GET pass.', function(assert) {
+  expect(3);
+
+  var method = 'GET',
+      path = 'http://fakesite.com:8888',
+      signed_headers = {},
+      content_type = 'text/plain',
+      responseText = 'correct response text';
+
+  var sign_parameters = {
+    method: method,
+    path: path,
+    signed_headers: signed_headers,
+    content_type: content_type
+  };
+  const { headers } = HMAC.getFetchHeaders(sign_parameters);
+
+  var authorization = 'acquia-http-hmac id="ABCD-1234",nonce="11bdbac4-1111-4111-9111-111111111111",realm="dice%5E",version="2.0",headers="",signature="aeOVMGoyBcWZPyyzdjrzFkGAF8gAGaeqbfA324L5q8Y="';
+  assert.equal(headers['X-Authorization-Timestamp'], 1000000, 'getFetchHeaders() creates "X-Authorization-Timestamp" request header.');
+  assert.equal(headers['Authorization'], authorization, 'getFetchHeaders() creates "Authorization".');
+  assert.equal(headers['X-Authorization-Content-SHA256'], undefined, 'sign() does not create "X-Authorization-Content-SHA256" request header for GET request.');
+});
+
+QUnit.test('Test getFetchHeaders(), asserts POST pass.', function(assert) {
+  expect(5);
+
+  var method = 'POST',
+      path = 'http://fakesite.com:8888',
+      signed_headers = {},
+      content_type = 'text/plain',
+      body = 'correct request text',
+      responseText = 'correct response text';
+
+  var sign_parameters = {
+    method: method,
+    path: path,
+    signed_headers: signed_headers,
+    content_type: content_type,
+    body: body
+  };
+  const { headers, nonce, timestamp } = HMAC.getFetchHeaders(sign_parameters);
+
+  var authorization = 'acquia-http-hmac id="ABCD-1234",nonce="11bdbac4-1111-4111-9111-111111111111",realm="dice%5E",version="2.0",headers="",signature="pNUQl+h18e+F6Lzd2lDGe53uaWCDbqQ5eqGnxrC433M="';
+  assert.equal(headers['X-Authorization-Timestamp'], 1000000, 'getFetchHeaders() creates "X-Authorization-Timestamp" request header.');
+  assert.equal(headers['Authorization'], authorization, 'getFetchHeaders() creates "Authorization".');
+  assert.equal(headers['X-Authorization-Content-SHA256'], '2WR1x45F7yiwv/OKh43jtkmbsMSfQvXxeR3z6RJHPBg=', 'getFetchHeaders() creates "X-Authorization-Content-SHA256" request header for POST request.');
+  assert.ok(nonce, 'getFetchHeaders() also returns the nonce');
+  assert.ok(timestamp, 'getFetchHeaders() also returns the timestamp');
 });
 
 QUnit.test('Test sign(), asserts GET pass.', function(assert) {
@@ -383,6 +433,20 @@ QUnit.test('Test hasValidResponse(), asserts fail by wrong server hash.', functi
 
   var hasValidResponse = HMAC.hasValidResponse(request);
   assert.notOk(hasValidResponse, 'hasValidResponse() asserts fail by wrong server hash.');
+});
+
+QUnit.test('Test hasValidFetchResponse(), asserts pass.', function(assert) {
+  expect(1);
+  // A smoke test to confirm it's correctly hooked up. Logic is covered in tests of `hasValidResponse`.
+  const responseText = 'correct response text';
+  const headers = {
+    'X-Server-Authorization-HMAC-SHA256': 'CU0ma6cbZ6wZAsjjKli8ukH8Nxx6kShpTQqxvw08Yns=',
+  };
+  const nonce = '480b7e99-d558-4a59-e49a-228ae489561b';
+  const timestamp = 1000000000;
+
+  var hasValidFetchResponse = HMAC.hasValidFetchResponse(responseText, headers, nonce, timestamp);
+  assert.ok(hasValidFetchResponse, 'hasValidFetchResponse() asserts pass.');
 });
 
 QUnit.test('Test parseUri(), asserts uri are parsed.', function(assert) {

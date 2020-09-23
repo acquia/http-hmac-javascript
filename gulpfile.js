@@ -32,7 +32,15 @@ gulp.task('build-lib', gulp.series('clean-lib', () => {
   .pipe(gulp.dest('./lib/es5'));
 }));
 
-gulp.task('test', gulp.series('build-lib', () => {
+gulp.task('build-test', () => {
+  return gulp.src(['./qunit/hmac.tests.js'])
+  .pipe(babel({
+    presets: ["@babel/preset-env"],
+  }))
+  .pipe(gulp.dest('./lib/es5'));
+});
+
+gulp.task('test', gulp.series('build-lib', 'build-test', () => {
   return gulp.src('./qunit/hmac.html')
     .pipe(qunit());
 }));
