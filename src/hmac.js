@@ -518,6 +518,31 @@ class AcquiaHttpHmac {
   }
 
   /**
+   * Helper method to perform the Crypto processing and comparison.
+   *
+   * @param {String} responseText
+   *   The content (as string) of the server's response.
+   * @param {String} sha256Header
+   *   The `X-Server-Authorization-HMAC-SHA256` header from the server's response.
+   * @param {String} nonce
+   *   The nonce used to sign the sent request.
+   * @param {String} timestamp
+   *   The nonce used to sign the sent request.
+   * @returns {boolean}
+   *   TRUE if the request is valid; FALSE otherwise.
+   */
+  #hasValidResponse(responseText, sha256Header, nonce, timestamp) {
+    const signature_base_string = `${nonce}\n${timestamp}\n${responseText}`;
+    const signature = CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64);
+
+    console.log('signature_base_string', signature_base_string);
+    console.log('signature ', signature);
+    console.log('server_signature', sha256Header);
+
+    return signature === sha256Header;    
+  }
+
+  /**
    * Check if the request has a valid response.
    *
    * @param {XMLHttpRequest|Object} request
@@ -526,16 +551,37 @@ class AcquiaHttpHmac {
    *   TRUE if the request is valid; FALSE otherwise.
    */
   hasValidResponse (request) {
-    let signature_base_string = `${request.acquiaHttpHmac.nonce}\n${request.acquiaHttpHmac.timestamp}\n${request.responseText}`,
-        signature = CryptoJS.HmacSHA256(signature_base_string, this.config.parsed_secret_key).toString(CryptoJS.enc.Base64),
-        server_signature = request.getResponseHeader('X-Server-Authorization-HMAC-SHA256');
-
-    console.log('signature_base_string', signature_base_string);
-    console.log('signature ', signature);
-    console.log('server_signature', server_signature);
-
-    return signature === server_signature;
+    return this.#hasValidResponse(
+      request.responseText,
+      request.getResponseHeader('X-Server-Authorization-HMAC-SHA256'),
+      request.acquiaHttpHmac.nonce,
+      request.acquiaHttpHmac.timestamp,
+    );
   };
+
+  /**
+   * Check if the Fetch Response is valid.
+   *
+   * @param {String} responseText
+   *   The Fetch response's text.
+   * @param {Object} headers
+   *   The Fetch response's headers.
+   * @param {String} nonce
+   *   The nonce used to sign the Fetch request.
+   * @param {String} timestamp
+   *   The nonce used to sign the Fetch request.
+   * @returns {boolean}
+   *   TRUE if the request is valid; FALSE otherwise.
+   */
+  hasValidFetchResponse (responseText, headers, nonce, timestamp) {
+    return this.#hasValidResponse(
+      responseText,
+      headers['X-Server-Authorization-HMAC-SHA256'],
+      nonce,
+      timestamp,
+    );
+  };
+
 }
 
 if (typeof exports === "object") {

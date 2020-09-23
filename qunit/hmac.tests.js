@@ -435,6 +435,20 @@ QUnit.test('Test hasValidResponse(), asserts fail by wrong server hash.', functi
   assert.notOk(hasValidResponse, 'hasValidResponse() asserts fail by wrong server hash.');
 });
 
+QUnit.test('Test hasValidFetchResponse(), asserts pass.', function(assert) {
+  expect(1);
+  // A smoke test to confirm it's correctly hooked up. Logic is covered in tests of `hasValidResponse`.
+  const responseText = 'correct response text';
+  const headers = {
+    'X-Server-Authorization-HMAC-SHA256': 'CU0ma6cbZ6wZAsjjKli8ukH8Nxx6kShpTQqxvw08Yns=',
+  };
+  const nonce = '480b7e99-d558-4a59-e49a-228ae489561b';
+  const timestamp = 1000000000;
+
+  var hasValidFetchResponse = HMAC.hasValidFetchResponse(responseText, headers, nonce, timestamp);
+  assert.ok(hasValidFetchResponse, 'hasValidFetchResponse() asserts pass.');
+});
+
 QUnit.test('Test parseUri(), asserts uri are parsed.', function(assert) {
   expect(4);
 
