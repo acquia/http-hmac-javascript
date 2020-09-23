@@ -164,6 +164,31 @@ if (!Array.prototype.indexOf) {
     return -1;
   };
 }
+//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign#Polyfill
+// Because PhantomJS does not fully support JS APIs
+if (typeof Object.assign != 'function') {
+  (function () {
+    Object.assign = function (target) {
+      'use strict';
+      if (target === undefined || target === null) {
+        throw new TypeError('Cannot convert undefined or null to object');
+      }
+
+      var output = Object(target);
+      for (var index = 1; index < arguments.length; index++) {
+        var source = arguments[index];
+        if (source !== undefined && source !== null) {
+          for (var nextKey in source) {
+            if (source.hasOwnProperty(nextKey)) {
+              output[nextKey] = source[nextKey];
+            }
+          }
+        }
+      }
+      return output;
+    };
+  })();
+}
 
 /**
  * AcquiaHttpHmac - Let's you sign a XMLHttpRequest or promised-based request object (e.g. jqXHR) by Acquia's
@@ -421,6 +446,26 @@ class AcquiaHttpHmac {
     return headers;
   };
 
+
+  /**
+   * Generate signed headers using provided parameters.
+   *
+   * @param {Object} signParameters
+   *   The signing parameters to be signed, which include method, path, headers, content type, body.
+   * @returns {object}
+   *   The object contains headers, nonce, and timestamp.
+   */
+  getFetchHeaders(signParameters) {
+    const nonce = this.#generateNonce();
+    const timestamp = this.#generateTimestamp();
+    const copiedParameters = Object.assign({}, signParameters);
+
+    Object.assign(copiedParameters, { nonce, timestamp });
+
+    const headers = this.getHeaders(copiedParameters);
+
+    return { headers, nonce, timestamp };
+  }
 
 
   /**
