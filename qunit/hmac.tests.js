@@ -21,6 +21,20 @@ Math.random = function () {
    return 0.123456789;
 };
 
+class Headers {
+  constructor() {
+    this.headers = {};
+  }
+
+  set(name, value) {
+    this.headers[name] = value;
+  }
+
+  get(name) {
+    return this.headers[name];
+  }
+}
+
 QUnit.module('HTTP HMAC JavaScript Library tests', {
   setup: function() {
     request = new MockHttpRequest();
@@ -439,13 +453,13 @@ QUnit.test('Test hasValidFetchResponse(), asserts pass.', function(assert) {
   expect(1);
   // A smoke test to confirm it's correctly hooked up. Logic is covered in tests of `hasValidResponse`.
   const responseText = 'correct response text';
-  const headers = {
-    'X-Server-Authorization-HMAC-SHA256': 'CU0ma6cbZ6wZAsjjKli8ukH8Nxx6kShpTQqxvw08Yns=',
-  };
   const nonce = '480b7e99-d558-4a59-e49a-228ae489561b';
   const timestamp = 1000000000;
+  const headers = new Headers();
 
-  var hasValidFetchResponse = HMAC.hasValidFetchResponse(responseText, headers, nonce, timestamp);
+  headers.set('X-Server-Authorization-HMAC-SHA256', 'CU0ma6cbZ6wZAsjjKli8ukH8Nxx6kShpTQqxvw08Yns=');
+
+  const hasValidFetchResponse = HMAC.hasValidFetchResponse(responseText, headers, nonce, timestamp);
   assert.ok(hasValidFetchResponse, 'hasValidFetchResponse() asserts pass.');
 });
 

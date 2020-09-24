@@ -539,7 +539,7 @@ class AcquiaHttpHmac {
     console.log('signature ', signature);
     console.log('server_signature', sha256Header);
 
-    return signature === sha256Header;    
+    return signature === sha256Header;
   }
 
   /**
@@ -576,7 +576,7 @@ class AcquiaHttpHmac {
   hasValidFetchResponse (responseText, headers, nonce, timestamp) {
     return this.#hasValidResponse(
       responseText,
-      headers['X-Server-Authorization-HMAC-SHA256'],
+      headers.get('X-Server-Authorization-HMAC-SHA256'),
       nonce,
       timestamp,
     );
