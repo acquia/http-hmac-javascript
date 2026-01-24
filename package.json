@@ -4,7 +4,7 @@
   "description": "HTTP HMAC JavaScript Library",
   "main": "./lib/es5/hmac.js",
   "dependencies": {
-    "crypto-js": "^3.1.6",
+    "crypto-js": "^4.2.0",
     "xmlhttprequest": "^1.8.0"
   },
   "devDependencies": {
